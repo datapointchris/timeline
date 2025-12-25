@@ -28,61 +28,44 @@ function navigateToEvent(event: TimelineEvent) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <header
-      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Timeline</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              Interactive historical timeline with relationship mapping
-            </p>
-          </div>
-          <div class="flex gap-2">
-            <button
-              :class="[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                viewMode === 'timeline'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700',
-              ]"
-              @click="viewMode = 'timeline'"
-            >
-              Timeline
-            </button>
-            <button
-              :class="[
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                viewMode === 'list'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700',
-              ]"
-              @click="viewMode = 'list'"
-            >
-              Cards
-            </button>
-          </div>
+  <div class="app">
+    <header class="header">
+      <div class="header-content container">
+        <div class="header-left">
+          <h1 class="header-title">Timeline</h1>
+          <p class="header-subtitle">Interactive historical timeline with relationship mapping</p>
+        </div>
+        <div class="view-toggle">
+          <button
+            class="btn"
+            :class="viewMode === 'timeline' ? 'btn-active' : 'btn-ghost'"
+            @click="viewMode = 'timeline'"
+          >
+            Timeline
+          </button>
+          <button
+            class="btn"
+            :class="viewMode === 'list' ? 'btn-active' : 'btn-ghost'"
+            @click="viewMode = 'list'"
+          >
+            Cards
+          </button>
         </div>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="space-y-8">
-        <div v-if="viewMode === 'timeline'">
+    <main class="main container">
+      <div class="content">
+        <div v-if="viewMode === 'timeline'" class="timeline-section">
           <Timeline :events="events" :selected-event-id="selectedEventId" @select="selectEvent" />
         </div>
 
-        <div class="grid gap-8" :class="selectedEventId ? 'lg:grid-cols-2' : ''">
-          <div v-if="viewMode === 'list'">
+        <div class="layout" :class="{ 'layout-split': selectedEventId }">
+          <div v-if="viewMode === 'list'" class="events-section">
             <EventList @select="selectEvent" />
           </div>
 
-          <div
-            v-if="selectedEventId"
-            :class="viewMode === 'timeline' ? '' : 'lg:sticky lg:top-8 lg:self-start'"
-          >
+          <div v-if="selectedEventId" class="detail-section">
             <EventDetail
               :event-id="selectedEventId"
               @close="closeDetail"
@@ -94,3 +77,72 @@ function navigateToEvent(event: TimelineEvent) {
     </main>
   </div>
 </template>
+
+<style scoped>
+.app {
+  min-height: 100vh;
+}
+
+.header {
+  background-color: var(--color-bg-header);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.header-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.main {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.layout {
+  display: grid;
+  gap: 2rem;
+}
+
+.layout-split {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .layout-split {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-section {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+  }
+}
+</style>

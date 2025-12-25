@@ -175,9 +175,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="timeline-wrapper bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
-  >
+  <div class="timeline-wrapper card">
     <div ref="containerRef" class="timeline-container"></div>
   </div>
 </template>
@@ -185,6 +183,7 @@ onUnmounted(() => {
 <style>
 .timeline-wrapper {
   --vis-font: inherit;
+  overflow: hidden;
 }
 
 .vis-timeline {
