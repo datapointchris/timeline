@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEvents } from '../composables/useEvents';
 import { api } from '../api/client';
+import RelationshipPicker from './RelationshipPicker.vue';
 import type {
   CreateEventInput,
   UpdateEventInput,
   EventType,
   DatePrecision,
   Tag,
+  CreateRelationshipInput,
+  RelationshipWithEvent,
 } from 'shared/types';
 
 const props = defineProps<{
@@ -29,6 +32,10 @@ const saving = ref(false);
 const error = ref<string | null>(null);
 const allTags = ref<Tag[]>([]);
 const tagInput = ref('');
+const showRelationshipPicker = ref(false);
+const pendingRelationships = ref<CreateRelationshipInput[]>([]);
+const existingRelationships = ref<RelationshipWithEvent[]>([]);
+const relationshipsToDelete = ref<number[]>([]);
 
 const form = ref<{
   id: string;
@@ -111,6 +118,10 @@ function resetForm() {
     tags: [],
   };
   editor.value?.commands.setContent('');
+  pendingRelationships.value = [];
+  existingRelationships.value = [];
+  relationshipsToDelete.value = [];
+  showRelationshipPicker.value = false;
 }
 
 function loadEventData() {
@@ -129,6 +140,7 @@ function loadEventData() {
       tags: event.tags.map(t => t.name),
     };
     editor.value?.commands.setContent(event.content || '');
+    existingRelationships.value = [...event.relationships];
     isEditing.value = true;
   }
 }
@@ -164,6 +176,35 @@ watch(tagInput, value => {
   }
 });
 
+const existingTargetIds = computed(() => {
+  const existing = existingRelationships.value
+    .filter(r => !relationshipsToDelete.value.includes(r.id))
+    .map(r => r.target_id);
+  const pending = pendingRelationships.value.map(r => r.target_id);
+  return [...existing, ...pending];
+});
+
+function formatRelationType(type: string): string {
+  return type.replace(/_/g, ' ');
+}
+
+function addPendingRelationship(rel: CreateRelationshipInput) {
+  pendingRelationships.value.push(rel);
+  showRelationshipPicker.value = false;
+}
+
+function removePendingRelationship(index: number) {
+  pendingRelationships.value.splice(index, 1);
+}
+
+function markRelationshipForDeletion(id: number) {
+  relationshipsToDelete.value.push(id);
+}
+
+function restoreRelationship(id: number) {
+  relationshipsToDelete.value = relationshipsToDelete.value.filter(rid => rid !== id);
+}
+
 async function handleSubmit() {
   if (!form.value.id || !form.value.title) {
     error.value = 'ID and title are required';
@@ -186,6 +227,11 @@ async function handleSubmit() {
         type: form.value.type || undefined,
       };
       await updateEvent(form.value.id, data);
+
+      // Delete marked relationships
+      for (const relId of relationshipsToDelete.value) {
+        await api.relationships.delete(relId);
+      }
     } else {
       const data: CreateEventInput = {
         id: form.value.id,
@@ -201,6 +247,18 @@ async function handleSubmit() {
       };
       await createEvent(data);
     }
+
+    // Create new relationships
+    for (const rel of pendingRelationships.value) {
+      const relData: CreateRelationshipInput = {
+        source_id: form.value.id,
+        target_id: rel.target_id,
+        type: rel.type,
+        notes: rel.notes,
+      };
+      await api.relationships.create(relData);
+    }
+
     emit('saved');
     emit('close');
   } catch (e) {
@@ -404,6 +462,88 @@ onMounted(() => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Relationships</label>
+
+        <div v-if="existingRelationships.length > 0" class="relationships-list">
+          <div
+            v-for="rel in existingRelationships"
+            :key="rel.id"
+            class="relationship-item"
+            :class="{ 'marked-for-deletion': relationshipsToDelete.includes(rel.id) }"
+          >
+            <div class="relationship-info">
+              <span class="relationship-type">{{ formatRelationType(rel.type) }}</span>
+              <span class="relationship-target">{{ rel.event.title }}</span>
+              <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
+            </div>
+            <button
+              v-if="!relationshipsToDelete.includes(rel.id)"
+              type="button"
+              class="relationship-remove"
+              title="Remove relationship"
+              @click="markRelationshipForDeletion(rel.id)"
+            >
+              &times;
+            </button>
+            <button
+              v-else
+              type="button"
+              class="relationship-restore"
+              title="Restore relationship"
+              @click="restoreRelationship(rel.id)"
+            >
+              ↩
+            </button>
+          </div>
+        </div>
+
+        <div v-if="pendingRelationships.length > 0" class="relationships-list pending-list">
+          <div
+            v-for="(rel, index) in pendingRelationships"
+            :key="index"
+            class="relationship-item pending"
+          >
+            <div class="relationship-info">
+              <span class="relationship-type">{{ formatRelationType(rel.type) }}</span>
+              <span class="relationship-target">{{ rel.target_id }}</span>
+              <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
+              <span class="pending-badge">new</span>
+            </div>
+            <button
+              type="button"
+              class="relationship-remove"
+              title="Remove"
+              @click="removePendingRelationship(index)"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <div v-if="showRelationshipPicker && form.id" class="picker-wrapper">
+          <RelationshipPicker
+            :source-event-id="form.id"
+            :existing-target-ids="existingTargetIds"
+            @add="addPendingRelationship"
+            @cancel="showRelationshipPicker = false"
+          />
+        </div>
+
+        <button
+          v-if="!showRelationshipPicker && form.id"
+          type="button"
+          class="btn btn-ghost btn-sm add-relationship-btn"
+          @click="showRelationshipPicker = true"
+        >
+          + Add Relationship
+        </button>
+
+        <p v-if="!form.id" class="relationship-hint">
+          Enter an event ID first to add relationships
+        </p>
       </div>
 
       <div class="form-actions">
@@ -634,5 +774,106 @@ onMounted(() => {
   gap: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--color-border);
+}
+
+.relationships-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.pending-list {
+  border-top: 1px dashed var(--color-border);
+  padding-top: 0.5rem;
+}
+
+.relationship-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.75rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.relationship-item.pending {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.relationship-item.marked-for-deletion {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.relationship-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.relationship-type {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-transform: capitalize;
+  min-width: 6rem;
+}
+
+.relationship-target {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.relationship-notes {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.pending-badge {
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.relationship-remove,
+.relationship-restore {
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.relationship-remove:hover {
+  color: var(--color-danger, #ef4444);
+}
+
+.relationship-restore:hover {
+  color: var(--color-primary);
+}
+
+.picker-wrapper {
+  margin-top: 0.5rem;
+}
+
+.add-relationship-btn {
+  margin-top: 0.5rem;
+}
+
+.relationship-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
 </style>

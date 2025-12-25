@@ -56,6 +56,10 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
         extraFileExtensions: ['.vue'],
       },
+      globals: {
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+      },
     },
     rules: {
       'vue/multi-word-component-names': 'off',

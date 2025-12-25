@@ -121,8 +121,11 @@ function formatRelationType(type: string, inverse: boolean): string {
               class="relationship-item"
               @click="emit('navigate', rel.event)"
             >
-              <span class="relationship-type">{{ formatRelationType(rel.type, false) }}</span>
-              <span class="relationship-target">{{ rel.event.title }}</span>
+              <div class="relationship-main">
+                <span class="relationship-type">{{ formatRelationType(rel.type, false) }}</span>
+                <span class="relationship-target">{{ rel.event.title }}</span>
+              </div>
+              <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
             </button>
           </div>
         </div>
@@ -136,8 +139,11 @@ function formatRelationType(type: string, inverse: boolean): string {
               class="relationship-item"
               @click="emit('navigate', rel.event)"
             >
-              <span class="relationship-type">{{ formatRelationType(rel.type, true) }}</span>
-              <span class="relationship-target">{{ rel.event.title }}</span>
+              <div class="relationship-main">
+                <span class="relationship-type">{{ formatRelationType(rel.type, true) }}</span>
+                <span class="relationship-target">{{ rel.event.title }}</span>
+              </div>
+              <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
             </button>
           </div>
         </div>
@@ -239,8 +245,9 @@ function formatRelationType(type: string, inverse: boolean): string {
 
 .relationship-item {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
   padding: 0.75rem;
   background-color: var(--color-bg);
   border: none;
@@ -255,6 +262,13 @@ function formatRelationType(type: string, inverse: boolean): string {
   background-color: var(--color-border);
 }
 
+.relationship-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
 .relationship-type {
   font-size: 0.875rem;
   color: var(--color-text-secondary);
@@ -263,5 +277,12 @@ function formatRelationType(type: string, inverse: boolean): string {
 
 .relationship-target {
   font-weight: 500;
+}
+
+.relationship-notes {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding-left: 8.25rem;
 }
 </style>
