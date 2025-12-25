@@ -8,7 +8,6 @@ import type {
   RelationshipWithEvent,
   CreateEventInput,
   UpdateEventInput,
-  RELATIONSHIP_INVERSES,
 } from 'shared';
 
 const INVERSES: Record<string, string> = {
@@ -65,31 +64,63 @@ export function getAllEvents(filters?: {
 }
 
 export function getEventById(id: string): EventWithRelations | null {
-  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as TimelineEvent | undefined;
+  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as
+    | TimelineEvent
+    | undefined;
 
   if (!event) return null;
 
-  const tags = db.prepare(`
+  const tags = db
+    .prepare(
+      `
     SELECT t.* FROM tags t
     JOIN event_tags et ON t.id = et.tag_id
     WHERE et.event_id = ?
-  `).all(id) as Tag[];
+  `
+    )
+    .all(id) as Tag[];
 
   const media = db.prepare('SELECT * FROM media WHERE event_id = ?').all(id) as Media[];
 
-  const outgoingRels = db.prepare(`
+  const outgoingRels = db
+    .prepare(
+      `
     SELECT r.*, e.id as event_id, e.title, e.date_start, e.date_end, e.is_bce, e.type as event_type
     FROM relationships r
     JOIN events e ON r.target_id = e.id
     WHERE r.source_id = ?
-  `).all(id) as Array<Relationship & { event_id: string; title: string; date_start: string; date_end: string; is_bce: number; event_type: string }>;
+  `
+    )
+    .all(id) as Array<
+    Relationship & {
+      event_id: string;
+      title: string;
+      date_start: string;
+      date_end: string;
+      is_bce: number;
+      event_type: string;
+    }
+  >;
 
-  const incomingRels = db.prepare(`
+  const incomingRels = db
+    .prepare(
+      `
     SELECT r.*, e.id as event_id, e.title, e.date_start, e.date_end, e.is_bce, e.type as event_type
     FROM relationships r
     JOIN events e ON r.source_id = e.id
     WHERE r.target_id = ?
-  `).all(id) as Array<Relationship & { event_id: string; title: string; date_start: string; date_end: string; is_bce: number; event_type: string }>;
+  `
+    )
+    .all(id) as Array<
+    Relationship & {
+      event_id: string;
+      title: string;
+      date_start: string;
+      date_end: string;
+      is_bce: number;
+      event_type: string;
+    }
+  >;
 
   const relationships: RelationshipWithEvent[] = outgoingRels.map(r => ({
     id: r.id,
@@ -169,7 +200,9 @@ export function createEvent(input: CreateEventInput): TimelineEvent {
 
   if (input.tags && input.tags.length > 0) {
     for (const tagName of input.tags) {
-      const existingTag = db.prepare('SELECT id FROM tags WHERE name = ?').get(tagName) as { id: number } | undefined;
+      const existingTag = db.prepare('SELECT id FROM tags WHERE name = ?').get(tagName) as
+        | { id: number }
+        | undefined;
       let tagId: number;
 
       if (existingTag) {
@@ -242,11 +275,15 @@ export function deleteEvent(id: string): boolean {
 
 export function searchEvents(query: string): TimelineEvent[] {
   const pattern = `%${query}%`;
-  const results = db.prepare(`
+  const results = db
+    .prepare(
+      `
     SELECT * FROM events
     WHERE title LIKE ? OR content LIKE ?
     ORDER BY date_start ASC, is_bce DESC
-  `).all(pattern, pattern) as TimelineEvent[];
+  `
+    )
+    .all(pattern, pattern) as TimelineEvent[];
 
   return results.map(e => ({ ...e, is_bce: Boolean(e.is_bce) }));
 }

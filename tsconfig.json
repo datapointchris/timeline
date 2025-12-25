@@ -9,8 +9,5 @@
     "resolveJsonModule": true,
     "declaration": true
   },
-  "references": [
-    { "path": "./server" },
-    { "path": "./shared" }
-  ]
+  "references": [{ "path": "./server" }, { "path": "./shared" }]
 }

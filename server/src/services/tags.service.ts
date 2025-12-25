@@ -24,12 +24,16 @@ export function deleteTag(id: number): boolean {
 }
 
 export function getTagsForEvent(eventId: string): Tag[] {
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     SELECT t.* FROM tags t
     JOIN event_tags et ON t.id = et.tag_id
     WHERE et.event_id = ?
     ORDER BY t.name ASC
-  `).all(eventId) as Tag[];
+  `
+    )
+    .all(eventId) as Tag[];
 }
 
 export function addTagToEvent(eventId: string, tagName: string): Tag {
@@ -43,9 +47,9 @@ export function addTagToEvent(eventId: string, tagName: string): Tag {
     tag = createTag(tagName);
   }
 
-  const existingLink = db.prepare(
-    'SELECT 1 FROM event_tags WHERE event_id = ? AND tag_id = ?'
-  ).get(eventId, tag.id);
+  const existingLink = db
+    .prepare('SELECT 1 FROM event_tags WHERE event_id = ? AND tag_id = ?')
+    .get(eventId, tag.id);
 
   if (!existingLink) {
     db.prepare('INSERT INTO event_tags (event_id, tag_id) VALUES (?, ?)').run(eventId, tag.id);
@@ -55,8 +59,8 @@ export function addTagToEvent(eventId: string, tagName: string): Tag {
 }
 
 export function removeTagFromEvent(eventId: string, tagId: number): boolean {
-  const result = db.prepare(
-    'DELETE FROM event_tags WHERE event_id = ? AND tag_id = ?'
-  ).run(eventId, tagId);
+  const result = db
+    .prepare('DELETE FROM event_tags WHERE event_id = ? AND tag_id = ?')
+    .run(eventId, tagId);
   return result.changes > 0;
 }

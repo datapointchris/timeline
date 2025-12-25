@@ -1,6 +1,14 @@
 export type DatePrecision = 'exact' | 'year' | 'decade' | 'century' | 'approximate' | 'uncertain';
 
-export type EventType = 'book' | 'person' | 'event' | 'movement' | 'idea' | 'artwork' | 'invention' | 'other';
+export type EventType =
+  | 'book'
+  | 'person'
+  | 'event'
+  | 'movement'
+  | 'idea'
+  | 'artwork'
+  | 'invention'
+  | 'other';
 
 export type RelationshipType =
   | 'influenced_by'

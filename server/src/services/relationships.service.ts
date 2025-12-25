@@ -15,13 +15,21 @@ export function getRelationshipsByEventId(eventId: string): {
   outgoing: Relationship[];
   incoming: Relationship[];
 } {
-  const outgoing = db.prepare(`
+  const outgoing = db
+    .prepare(
+      `
     SELECT * FROM relationships WHERE source_id = ?
-  `).all(eventId) as Relationship[];
+  `
+    )
+    .all(eventId) as Relationship[];
 
-  const incoming = db.prepare(`
+  const incoming = db
+    .prepare(
+      `
     SELECT * FROM relationships WHERE target_id = ?
-  `).all(eventId) as Relationship[];
+  `
+    )
+    .all(eventId) as Relationship[];
 
   return { outgoing, incoming };
 }
@@ -47,12 +55,18 @@ export function createRelationship(input: CreateRelationshipInput): Relationship
 
   const now = new Date().toISOString();
 
-  const result = db.prepare(`
+  const result = db
+    .prepare(
+      `
     INSERT INTO relationships (source_id, target_id, type, notes, created_at)
     VALUES (?, ?, ?, ?, ?)
-  `).run(input.source_id, input.target_id, input.type, input.notes || null, now);
+  `
+    )
+    .run(input.source_id, input.target_id, input.type, input.notes || null, now);
 
-  return db.prepare('SELECT * FROM relationships WHERE id = ?').get(result.lastInsertRowid) as Relationship;
+  return db
+    .prepare('SELECT * FROM relationships WHERE id = ?')
+    .get(result.lastInsertRowid) as Relationship;
 }
 
 export function deleteRelationship(id: number): boolean {
