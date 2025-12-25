@@ -93,9 +93,9 @@ repos:
 
       - id: typescript-check
         name: TypeScript Type Check
-        entry: bash -c 'cd server && npx tsc --noEmit'
+        entry: npm run typecheck
         language: system
-        types: [ts]
+        types_or: [ts, vue]
         stages: [pre-commit]
         pass_filenames: false
 
