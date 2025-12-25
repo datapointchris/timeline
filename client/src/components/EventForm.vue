@@ -40,7 +40,8 @@ const relationshipsToDelete = ref<number[]>([]);
 const form = ref<{
   id: string;
   title: string;
-  content: string;
+  summary: string;
+  details: string;
   date_start: string;
   date_end: string;
   date_precision: DatePrecision | '';
@@ -51,7 +52,8 @@ const form = ref<{
 }>({
   id: '',
   title: '',
-  content: '',
+  summary: '',
+  details: '',
   date_start: '',
   date_end: '',
   date_precision: '',
@@ -87,12 +89,12 @@ const editor = useEditor({
       openOnClick: false,
     }),
     Placeholder.configure({
-      placeholder: 'Write event description...',
+      placeholder: 'Write detailed content (optional)...',
     }),
   ],
   content: '',
   onUpdate: ({ editor }) => {
-    form.value.content = editor.getHTML();
+    form.value.details = editor.getHTML();
   },
 });
 
@@ -108,7 +110,8 @@ function resetForm() {
   form.value = {
     id: '',
     title: '',
-    content: '',
+    summary: '',
+    details: '',
     date_start: '',
     date_end: '',
     date_precision: '',
@@ -130,7 +133,8 @@ function loadEventData() {
     form.value = {
       id: event.id,
       title: event.title,
-      content: event.content || '',
+      summary: event.summary || '',
+      details: event.details || '',
       date_start: event.date_start || '',
       date_end: event.date_end || '',
       date_precision: event.date_precision || '',
@@ -139,7 +143,7 @@ function loadEventData() {
       type: event.type || '',
       tags: event.tags.map(t => t.name),
     };
-    editor.value?.commands.setContent(event.content || '');
+    editor.value?.commands.setContent(event.details || '');
     existingRelationships.value = [...event.relationships];
     isEditing.value = true;
   }
@@ -218,7 +222,8 @@ async function handleSubmit() {
     if (isEditing.value) {
       const data: UpdateEventInput = {
         title: form.value.title,
-        content: form.value.content || undefined,
+        summary: form.value.summary || undefined,
+        details: form.value.details || undefined,
         date_start: form.value.date_start || undefined,
         date_end: form.value.date_end || undefined,
         date_precision: form.value.date_precision || undefined,
@@ -236,7 +241,8 @@ async function handleSubmit() {
       const data: CreateEventInput = {
         id: form.value.id,
         title: form.value.title,
-        content: form.value.content || undefined,
+        summary: form.value.summary || undefined,
+        details: form.value.details || undefined,
         date_start: form.value.date_start || undefined,
         date_end: form.value.date_end || undefined,
         date_precision: form.value.date_precision || undefined,
@@ -345,7 +351,18 @@ onMounted(() => {
       </div>
 
       <div class="form-group">
-        <label class="form-label">Content</label>
+        <label class="form-label" for="event-summary">Summary</label>
+        <textarea
+          id="event-summary"
+          v-model="form.summary"
+          class="form-input form-textarea"
+          placeholder="Brief summary shown on event cards..."
+          rows="2"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Details (optional)</label>
         <div class="editor-wrapper">
           <div class="editor-toolbar">
             <button
@@ -644,6 +661,11 @@ onMounted(() => {
 .form-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 3rem;
 }
 
 .form-checkbox {

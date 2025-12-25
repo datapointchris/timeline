@@ -45,8 +45,7 @@ function formatDate(event: TimelineEvent): string {
           {{ formatDate(event) }}
         </p>
 
-        <!-- eslint-disable-next-line vue/no-v-html -->
-        <p v-if="event.content" class="event-content line-clamp-3" v-html="event.content"></p>
+        <p v-if="event.summary" class="event-content line-clamp-3">{{ event.summary }}</p>
       </button>
     </div>
   </div>

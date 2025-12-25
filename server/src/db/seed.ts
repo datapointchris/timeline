@@ -3,7 +3,8 @@ import { db, initializeDatabase } from './index.js';
 interface SeedEvent {
   id: string;
   title: string;
-  content: string;
+  summary: string;
+  details?: string;
   date_start: string;
   date_end?: string;
   date_precision: string;
@@ -24,8 +25,10 @@ const events: SeedEvent[] = [
   {
     id: 'industrial-revolution',
     title: 'Industrial Revolution',
-    content:
-      '<p>A period of major industrialization and innovation during the late 18th and early 19th century. The Industrial Revolution fundamentally changed the way goods were manufactured and had profound effects on society, economics, and politics.</p>',
+    summary:
+      'A period of major industrialization and innovation during the late 18th and early 19th century.',
+    details:
+      '<p>The Industrial Revolution fundamentally changed the way goods were manufactured and had profound effects on society, economics, and politics.</p><p>Beginning in Britain, it marked a shift from agrarian economies to industrial manufacturing. Key innovations included the steam engine, spinning jenny, and power loom.</p>',
     date_start: '1760',
     date_end: '1840',
     date_precision: 'decade',
@@ -36,8 +39,9 @@ const events: SeedEvent[] = [
   {
     id: 'french-revolution',
     title: 'French Revolution',
-    content:
-      '<p>A period of radical political and societal change in France that began with the Estates General of 1789 and ended with the formation of the French Consulate in November 1799.</p>',
+    summary: 'A period of radical political and societal change in France from 1789 to 1799.',
+    details:
+      '<p>The French Revolution began with the Estates General of 1789 and ended with the formation of the French Consulate in November 1799.</p><p>It led to the end of the monarchy and the rise of Napoleon Bonaparte. The revolution had lasting effects on political thought worldwide.</p>',
     date_start: '1789',
     date_end: '1799',
     date_precision: 'year',
@@ -48,8 +52,10 @@ const events: SeedEvent[] = [
   {
     id: 'schopenhauer-world-as-will',
     title: 'The World as Will and Representation',
-    content:
-      '<p>A work by Arthur Schopenhauer, in which he argues that the world as we experience it is driven by a blind, purposeless force he called the "Will." This pessimistic philosophy would later deeply influence Nietzsche.</p>',
+    summary:
+      'Arthur Schopenhauer\'s magnum opus arguing the world is driven by a blind, purposeless "Will."',
+    details:
+      "<p>Published in 1818, this work presents Schopenhauer's pessimistic philosophy that would later deeply influence Nietzsche, Wagner, and Freud.</p><p>Schopenhauer argues that the underlying reality of the world is irrational will, and that human suffering results from our enslavement to desire.</p>",
     date_start: '1818',
     date_precision: 'year',
     is_bce: 0,
@@ -59,8 +65,10 @@ const events: SeedEvent[] = [
   {
     id: 'communist-manifesto',
     title: 'The Communist Manifesto',
-    content:
-      '<p>A political pamphlet written by Karl Marx and Friedrich Engels, published in 1848. It presents an analytical approach to the class struggle and the conflicts of capitalism.</p>',
+    summary:
+      'A political pamphlet by Marx and Engels presenting an analytical approach to class struggle.',
+    details:
+      '<p>Published in 1848, The Communist Manifesto presents an analytical approach to the class struggle and the conflicts of capitalism.</p><p>It outlines the theory of historical materialism and calls for the overthrow of the bourgeoisie by the proletariat.</p>',
     date_start: '1848',
     date_precision: 'year',
     is_bce: 0,
@@ -70,8 +78,10 @@ const events: SeedEvent[] = [
   {
     id: 'nietzsche-birth',
     title: 'Friedrich Nietzsche',
-    content:
-      '<p>German philosopher, cultural critic, and philologist. His work addressed fundamental questions about truth, morality, culture, and the meaning of existence. Nietzsche lived from 1844 to 1900.</p>',
+    summary:
+      'German philosopher, cultural critic, and philologist who questioned traditional morality.',
+    details:
+      '<p>Friedrich Nietzsche (1844-1900) was a German philosopher whose work addressed fundamental questions about truth, morality, culture, and the meaning of existence.</p><p>His concepts include the "will to power," the "Übermensch," and the famous declaration that "God is dead." His work has been highly influential in philosophy, literature, and psychology.</p>',
     date_start: '1844',
     date_end: '1900',
     date_precision: 'year',
@@ -82,8 +92,9 @@ const events: SeedEvent[] = [
   {
     id: 'dostoevsky-brothers-karamazov',
     title: 'The Brothers Karamazov',
-    content:
-      '<p>A philosophical novel by Russian author Fyodor Dostoevsky, exploring deep moral questions about God, free will, and morality. It is considered one of the greatest novels ever written.</p>',
+    summary: "Dostoevsky's final novel exploring questions of God, free will, and morality.",
+    details:
+      '<p>A philosophical novel by Russian author Fyodor Dostoevsky, published in 1880. It is considered one of the greatest novels ever written.</p><p>The novel explores deep moral questions through the story of three brothers and their father. The famous "Grand Inquisitor" chapter is particularly influential in philosophy.</p>',
     date_start: '1880',
     date_precision: 'year',
     is_bce: 0,
@@ -93,8 +104,9 @@ const events: SeedEvent[] = [
   {
     id: 'nietzsche-zarathustra',
     title: 'Thus Spoke Zarathustra',
-    content:
-      '<p>A philosophical novel by Friedrich Nietzsche, composed in four parts. It introduces many of Nietzsche&apos;s key ideas, including the Übermensch, the death of God, and the eternal recurrence.</p>',
+    summary: "Nietzsche's philosophical novel introducing the Übermensch and eternal recurrence.",
+    details:
+      "<p>A philosophical novel by Friedrich Nietzsche, composed in four parts between 1883-1885.</p><p>It introduces many of Nietzsche's key ideas, including the Übermensch (Superman), the death of God, and the eternal recurrence of the same. Written in a prophetic, poetic style.</p>",
     date_start: '1883',
     date_end: '1885',
     date_precision: 'year',
@@ -105,8 +117,9 @@ const events: SeedEvent[] = [
   {
     id: 'nietzsche-beyond-good-evil',
     title: 'Beyond Good and Evil',
-    content:
-      '<p>A book by philosopher Friedrich Nietzsche, first published in 1886. Nietzsche attacks past philosophers for their alleged lack of critical sense and their blind acceptance of Christian premises.</p>',
+    summary: "Nietzsche's critique of traditional philosophy and morality.",
+    details:
+      '<p>First published in 1886, Beyond Good and Evil attacks past philosophers for their alleged lack of critical sense and their blind acceptance of Christian premises.</p><p>Nietzsche develops his concept of "master morality" versus "slave morality" and critiques the assumptions underlying Western philosophy.</p>',
     date_start: '1886',
     date_precision: 'year',
     is_bce: 0,
@@ -116,12 +129,13 @@ const events: SeedEvent[] = [
   {
     id: 'socrates',
     title: 'Socrates',
-    content:
-      '<p>Classical Greek philosopher credited as one of the founders of Western philosophy. Known primarily through the accounts of later classical writers, especially his students Plato and Xenophon.</p>',
+    summary: 'Classical Greek philosopher credited as one of the founders of Western philosophy.',
+    details:
+      '<p>Socrates (c. 470-399 BCE) is known primarily through the accounts of later classical writers, especially his students Plato and Xenophon.</p><p>He developed the Socratic method of questioning and is famous for his claim that he knows nothing. He was sentenced to death by drinking hemlock.</p>',
     date_start: '470',
     date_end: '399',
     date_precision: 'approximate',
-    date_display: 'c. 470–399 BCE',
+    date_display: 'c. 470-399 BCE',
     is_bce: 1,
     type: 'person',
     tags: ['philosophy', 'ancient greece'],
@@ -129,8 +143,9 @@ const events: SeedEvent[] = [
   {
     id: 'plato-republic',
     title: 'The Republic',
-    content:
-      '<p>A Socratic dialogue by Plato, written around 375 BCE. It concerns justice, the order and character of the just city-state, and the just man. It remains one of the most influential works of philosophy.</p>',
+    summary: "Plato's dialogue on justice and the ideal city-state.",
+    details:
+      '<p>A Socratic dialogue by Plato, written around 375 BCE. It concerns justice, the order and character of the just city-state, and the just man.</p><p>It contains the famous Allegory of the Cave and the theory of Forms. It remains one of the most influential works of philosophy and political theory.</p>',
     date_start: '375',
     date_precision: 'approximate',
     date_display: 'c. 375 BCE',
@@ -198,8 +213,8 @@ function seed() {
 
   console.log('Inserting events...');
   const insertEvent = db.prepare(`
-    INSERT INTO events (id, title, content, date_start, date_end, date_precision, date_display, is_bce, type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (id, title, summary, details, date_start, date_end, date_precision, date_display, is_bce, type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertTag = db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)');
@@ -210,7 +225,8 @@ function seed() {
     insertEvent.run(
       event.id,
       event.title,
-      event.content,
+      event.summary,
+      event.details || null,
       event.date_start,
       event.date_end || null,
       event.date_precision,

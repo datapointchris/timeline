@@ -132,7 +132,8 @@ export function getEventById(id: string): EventWithRelations | null {
     event: {
       id: r.event_id,
       title: r.title,
-      content: null,
+      summary: null,
+      details: null,
       date_start: r.date_start,
       date_end: r.date_end,
       date_precision: null,
@@ -154,7 +155,8 @@ export function getEventById(id: string): EventWithRelations | null {
     event: {
       id: r.event_id,
       title: r.title,
-      content: null,
+      summary: null,
+      details: null,
       date_start: r.date_start,
       date_end: r.date_end,
       date_precision: null,
@@ -180,14 +182,15 @@ export function createEvent(input: CreateEventInput): TimelineEvent {
   const now = new Date().toISOString();
 
   const stmt = db.prepare(`
-    INSERT INTO events (id, title, content, date_start, date_end, date_precision, date_display, is_bce, type, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (id, title, summary, details, date_start, date_end, date_precision, date_display, is_bce, type, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
     input.id,
     input.title,
-    input.content || null,
+    input.summary || null,
+    input.details || null,
     input.date_start || null,
     input.date_end || null,
     input.date_precision || null,
@@ -231,9 +234,13 @@ export function updateEvent(id: string, input: UpdateEventInput): TimelineEvent 
     fields.push('title = ?');
     values.push(input.title);
   }
-  if (input.content !== undefined) {
-    fields.push('content = ?');
-    values.push(input.content);
+  if (input.summary !== undefined) {
+    fields.push('summary = ?');
+    values.push(input.summary);
+  }
+  if (input.details !== undefined) {
+    fields.push('details = ?');
+    values.push(input.details);
   }
   if (input.date_start !== undefined) {
     fields.push('date_start = ?');
@@ -279,11 +286,11 @@ export function searchEvents(query: string): TimelineEvent[] {
     .prepare(
       `
     SELECT * FROM events
-    WHERE title LIKE ? OR content LIKE ?
+    WHERE title LIKE ? OR summary LIKE ? OR details LIKE ?
     ORDER BY date_start ASC, is_bce DESC
   `
     )
-    .all(pattern, pattern) as TimelineEvent[];
+    .all(pattern, pattern, pattern) as TimelineEvent[];
 
   return results.map(e => ({ ...e, is_bce: Boolean(e.is_bce) }));
 }

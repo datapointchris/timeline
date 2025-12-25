@@ -24,7 +24,8 @@ export type MediaType = 'image' | 'link' | 'video_url';
 export interface TimelineEvent {
   id: string;
   title: string;
-  content: string | null;
+  summary: string | null;
+  details: string | null;
   date_start: string | null;
   date_end: string | null;
   date_precision: DatePrecision | null;
@@ -87,7 +88,8 @@ export const RELATIONSHIP_INVERSES: Record<RelationshipType, string> = {
 export interface CreateEventInput {
   id: string;
   title: string;
-  content?: string;
+  summary?: string;
+  details?: string;
   date_start?: string;
   date_end?: string;
   date_precision?: DatePrecision;
@@ -99,7 +101,8 @@ export interface CreateEventInput {
 
 export interface UpdateEventInput {
   title?: string;
-  content?: string;
+  summary?: string;
+  details?: string;
   date_start?: string;
   date_end?: string;
   date_precision?: DatePrecision;
