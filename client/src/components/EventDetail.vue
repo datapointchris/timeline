@@ -110,6 +110,7 @@ function formatRelationType(type: string, inverse: boolean): string {
           </div>
         </div>
 
+        <!-- eslint-disable-next-line vue/no-v-html -->
         <div v-if="selectedEvent.content" class="prose" v-html="selectedEvent.content"></div>
 
         <div v-if="selectedEvent.relationships.length > 0" class="relationships-section">

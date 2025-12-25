@@ -1,17 +1,47 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Timeline from './components/Timeline.vue';
 import EventList from './components/EventList.vue';
 import EventDetail from './components/EventDetail.vue';
 import EventForm from './components/EventForm.vue';
+import FilterBar from './components/FilterBar.vue';
 import { useEvents } from './composables/useEvents';
-import type { TimelineEvent } from 'shared/types';
+import type { TimelineEvent, EventType } from 'shared/types';
 
-const { events, fetchEvents } = useEvents();
+const { events, fetchEvents, searchEvents } = useEvents();
 const selectedEventId = ref<string | null>(null);
 const viewMode = ref<'timeline' | 'list'>('timeline');
 const showForm = ref(false);
 const editingEventId = ref<string | null>(null);
+
+const currentFilters = ref<{ search?: string; type?: EventType; tag?: string }>({});
+const searchResults = ref<TimelineEvent[] | null>(null);
+
+const displayedEvents = computed(() => {
+  if (searchResults.value !== null) {
+    return searchResults.value;
+  }
+  return events.value;
+});
+
+async function handleFilter(params: { search?: string; type?: EventType; tag?: string }) {
+  currentFilters.value = params;
+
+  if (params.search) {
+    const results = await searchEvents(params.search);
+    let filtered = results;
+    if (params.type) {
+      filtered = filtered.filter(e => e.type === params.type);
+    }
+    if (params.tag) {
+      filtered = filtered.filter(e => e.title.toLowerCase().includes(params.tag!.toLowerCase()));
+    }
+    searchResults.value = filtered;
+  } else {
+    searchResults.value = null;
+    await fetchEvents({ type: params.type, tag: params.tag });
+  }
+}
 
 onMounted(() => {
   fetchEvents();
@@ -44,8 +74,8 @@ function closeForm() {
   editingEventId.value = null;
 }
 
-function onEventSaved() {
-  fetchEvents();
+async function onEventSaved() {
+  await handleFilter(currentFilters.value);
   if (editingEventId.value) {
     selectedEventId.value = editingEventId.value;
   }
@@ -88,13 +118,19 @@ function onEventSaved() {
       </div>
 
       <div v-else class="content">
+        <FilterBar @filter="handleFilter" />
+
         <div v-if="viewMode === 'timeline'" class="timeline-section">
-          <Timeline :events="events" :selected-event-id="selectedEventId" @select="selectEvent" />
+          <Timeline
+            :events="displayedEvents"
+            :selected-event-id="selectedEventId"
+            @select="selectEvent"
+          />
         </div>
 
         <div class="layout" :class="{ 'layout-split': selectedEventId }">
           <div v-if="viewMode === 'list'" class="events-section">
-            <EventList @select="selectEvent" />
+            <EventList :events="displayedEvents" @select="selectEvent" />
           </div>
 
           <div v-if="selectedEventId" class="detail-section">

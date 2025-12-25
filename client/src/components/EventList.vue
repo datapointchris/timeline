@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useEvents } from '../composables/useEvents';
 import type { TimelineEvent } from 'shared/types';
+
+defineProps<{
+  events: readonly TimelineEvent[];
+}>();
 
 const emit = defineEmits<{
   select: [event: TimelineEvent];
 }>();
-
-const { events, loading, error, fetchEvents } = useEvents();
-
-onMounted(() => {
-  fetchEvents();
-});
 
 function formatDate(event: TimelineEvent): string {
   if (event.date_display) return event.date_display;
@@ -27,16 +23,8 @@ function formatDate(event: TimelineEvent): string {
 
 <template>
   <div class="event-list">
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-    </div>
-
-    <div v-else-if="error" class="error-box">
-      {{ error }}
-    </div>
-
-    <div v-else-if="events.length === 0" class="empty">
-      No events yet. Create your first event to get started.
+    <div v-if="events.length === 0" class="empty">
+      No events found. Try adjusting your filters or create a new event.
     </div>
 
     <div v-else class="grid-events">
@@ -57,6 +45,7 @@ function formatDate(event: TimelineEvent): string {
           {{ formatDate(event) }}
         </p>
 
+        <!-- eslint-disable-next-line vue/no-v-html -->
         <p v-if="event.content" class="event-content line-clamp-3" v-html="event.content"></p>
       </button>
     </div>
@@ -68,12 +57,6 @@ function formatDate(event: TimelineEvent): string {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
 }
 
 .empty {
