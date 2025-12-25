@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Timeline from './components/Timeline.vue';
 import EventList from './components/EventList.vue';
 import EventDetail from './components/EventDetail.vue';
@@ -43,10 +43,6 @@ async function handleFilter(params: { search?: string; type?: EventType; tag?: s
   }
 }
 
-onMounted(() => {
-  fetchEvents();
-});
-
 function selectEvent(event: TimelineEvent) {
   selectedEventId.value = event.id;
 }
@@ -80,6 +76,25 @@ async function onEventSaved() {
     selectedEventId.value = editingEventId.value;
   }
 }
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    if (showForm.value) {
+      closeForm();
+    } else if (selectedEventId.value) {
+      closeDetail();
+    }
+  }
+}
+
+onMounted(() => {
+  fetchEvents();
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
 </script>
 
 <template>

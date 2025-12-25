@@ -59,6 +59,7 @@ export default tseslint.config(
       globals: {
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
+        window: 'readonly',
       },
     },
     rules: {
