@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { watch } from 'vue';
-import { useEvents } from '../composables/useEvents';
-import type { TimelineEvent } from 'shared/types';
+import { ref, watch } from 'vue';
+import type { TimelineEvent, EventWithRelations } from 'shared/types';
 import { RELATIONSHIP_INVERSES } from 'shared/types';
+import { api } from '../api/client';
 
 const props = defineProps<{
   eventId: string;
@@ -12,9 +12,33 @@ const emit = defineEmits<{
   close: [];
   navigate: [event: TimelineEvent];
   edit: [];
+  filterByType: [type: string];
+  filterByTag: [tag: string];
+  showDetails: [eventId: string];
 }>();
 
-const { selectedEvent, loading, error, fetchEvent } = useEvents();
+function handleTitleClick() {
+  if (event.value?.details) {
+    emit('showDetails', event.value.id);
+  }
+}
+
+const event = ref<EventWithRelations | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
+
+async function fetchEvent(id: string) {
+  loading.value = true;
+  error.value = null;
+  try {
+    event.value = await api.events.get(id);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to fetch event';
+    event.value = null;
+  } finally {
+    loading.value = false;
+  }
+}
 
 watch(
   () => props.eventId,
@@ -25,16 +49,16 @@ watch(
 );
 
 function formatDate(): string {
-  if (!selectedEvent.value) return '';
-  const event = selectedEvent.value;
-  if (event.date_display) return event.date_display;
-  if (!event.date_start) return '';
+  if (!event.value) return '';
+  const ev = event.value;
+  if (ev.date_display) return ev.date_display;
+  if (!ev.date_start) return '';
 
-  const prefix = event.is_bce ? 'BCE ' : '';
-  if (event.date_end && event.date_end !== event.date_start) {
-    return `${prefix}${event.date_start} – ${event.date_end}`;
+  const prefix = ev.is_bce ? 'BCE ' : '';
+  if (ev.date_end && ev.date_end !== ev.date_start) {
+    return `${prefix}${ev.date_start} – ${ev.date_end}`;
   }
-  return `${prefix}${event.date_start}`;
+  return `${prefix}${ev.date_start}`;
 }
 
 function formatRelationType(type: string, inverse: boolean): string {
@@ -48,7 +72,8 @@ function formatRelationType(type: string, inverse: boolean): string {
 <template>
   <div class="detail-panel card">
     <div class="panel-header">
-      <h2 class="panel-title">Event Details</h2>
+      <span v-if="event" class="panel-title">{{ event.title }}</span>
+      <span v-else class="panel-title">Loading...</span>
       <div class="panel-actions">
         <button class="action-btn" title="Edit event" @click="emit('edit')">
           <svg
@@ -90,34 +115,58 @@ function formatRelationType(type: string, inverse: boolean): string {
         {{ error }}
       </div>
 
-      <div v-else-if="selectedEvent" class="event-content">
+      <div v-else-if="event" class="event-content">
         <div class="event-header">
-          <h1 class="event-title">{{ selectedEvent.title }}</h1>
-
           <div class="event-meta">
-            <span v-if="selectedEvent.type" class="tag" :class="`tag-${selectedEvent.type}`">
-              {{ selectedEvent.type }}
-            </span>
+            <button
+              v-if="event.type"
+              class="tag tag-clickable"
+              :class="`tag-${event.type}`"
+              @click="emit('filterByType', event.type)"
+            >
+              {{ event.type }}
+            </button>
             <span v-if="formatDate()" class="tag tag-other">
               {{ formatDate() }}
             </span>
           </div>
 
-          <div v-if="selectedEvent.tags.length > 0" class="tags-list">
-            <span v-for="tag in selectedEvent.tags" :key="tag.id" class="tag tag-purple">
+          <div v-if="event.tags.length > 0" class="tags-list">
+            <button
+              v-for="tag in event.tags"
+              :key="tag.id"
+              class="tag tag-clickable tag-purple"
+              @click="emit('filterByTag', tag.name)"
+            >
               {{ tag.name }}
-            </span>
+            </button>
           </div>
         </div>
 
-        <!-- eslint-disable-next-line vue/no-v-html -->
-        <div v-if="selectedEvent.content" class="prose" v-html="selectedEvent.content"></div>
+        <p v-if="event.summary" class="event-summary">{{ event.summary }}</p>
 
-        <div v-if="selectedEvent.relationships.length > 0" class="relationships-section">
+        <button v-if="event.details" class="detailed-info-btn" @click="handleTitleClick">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          View Full Details
+        </button>
+
+        <div v-if="event.relationships.length > 0" class="relationships-section">
           <h3 class="section-title">Relationships</h3>
           <div class="relationships-list">
             <button
-              v-for="rel in selectedEvent.relationships"
+              v-for="rel in event.relationships"
               :key="rel.id"
               class="relationship-item"
               @click="emit('navigate', rel.event)"
@@ -131,11 +180,11 @@ function formatRelationType(type: string, inverse: boolean): string {
           </div>
         </div>
 
-        <div v-if="selectedEvent.inverse_relationships.length > 0" class="relationships-section">
+        <div v-if="event.inverse_relationships.length > 0" class="relationships-section">
           <h3 class="section-title">Referenced By</h3>
           <div class="relationships-list">
             <button
-              v-for="rel in selectedEvent.inverse_relationships"
+              v-for="rel in event.inverse_relationships"
               :key="rel.id"
               class="relationship-item"
               @click="emit('navigate', rel.event)"
@@ -167,9 +216,15 @@ function formatRelationType(type: string, inverse: boolean): string {
 }
 
 .panel-title {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
+  color: var(--color-text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .panel-actions {
@@ -208,10 +263,32 @@ function formatRelationType(type: string, inverse: boolean): string {
   gap: 1.5rem;
 }
 
-.event-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem;
+.event-summary {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.detailed-info-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.detailed-info-btn:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
 }
 
 .event-meta {
@@ -285,5 +362,15 @@ function formatRelationType(type: string, inverse: boolean): string {
   color: var(--color-text-muted);
   font-style: italic;
   padding-left: 8.25rem;
+}
+
+.tag-clickable {
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+}
+
+.tag-clickable:hover {
+  opacity: 0.7;
 }
 </style>

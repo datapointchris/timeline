@@ -3,14 +3,34 @@ import { ref, watch, onMounted } from 'vue';
 import { api } from '../api/client';
 import type { Tag, EventType } from 'shared/types';
 
+const props = defineProps<{
+  type?: EventType;
+  tag?: string;
+}>();
+
 const emit = defineEmits<{
   filter: [params: { search?: string; type?: EventType; tag?: string }];
 }>();
 
 const searchQuery = ref('');
-const selectedType = ref<EventType | ''>('');
-const selectedTag = ref('');
+const selectedType = ref<EventType | ''>(props.type || '');
+const selectedTag = ref(props.tag || '');
 const allTags = ref<Tag[]>([]);
+
+// Sync with external props
+watch(
+  () => props.type,
+  newType => {
+    selectedType.value = newType || '';
+  }
+);
+
+watch(
+  () => props.tag,
+  newTag => {
+    selectedTag.value = newTag || '';
+  }
+);
 
 const eventTypes: EventType[] = [
   'book',
