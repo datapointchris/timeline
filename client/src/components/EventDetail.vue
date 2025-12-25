@@ -11,6 +11,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   navigate: [event: TimelineEvent];
+  edit: [];
 }>();
 
 const { selectedEvent, loading, error, fetchEvent } = useEvents();
@@ -48,21 +49,36 @@ function formatRelationType(type: string, inverse: boolean): string {
   <div class="detail-panel card">
     <div class="panel-header">
       <h2 class="panel-title">Event Details</h2>
-      <button class="close-btn" @click="emit('close')">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-            clip-rule="evenodd"
-          />
-        </svg>
-      </button>
+      <div class="panel-actions">
+        <button class="action-btn" title="Edit event" @click="emit('edit')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+            />
+          </svg>
+        </button>
+        <button class="action-btn" title="Close" @click="emit('close')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="panel-body">
@@ -149,16 +165,22 @@ function formatRelationType(type: string, inverse: boolean): string {
   margin: 0;
 }
 
-.close-btn {
+.panel-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.action-btn {
   padding: 0.5rem;
   background: transparent;
   border: none;
   border-radius: var(--radius);
   color: var(--color-text-secondary);
   transition: all 0.15s ease;
+  cursor: pointer;
 }
 
-.close-btn:hover {
+.action-btn:hover {
   background-color: var(--color-border);
   color: var(--color-text);
 }

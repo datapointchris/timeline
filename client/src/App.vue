@@ -3,12 +3,15 @@ import { ref, onMounted } from 'vue';
 import Timeline from './components/Timeline.vue';
 import EventList from './components/EventList.vue';
 import EventDetail from './components/EventDetail.vue';
+import EventForm from './components/EventForm.vue';
 import { useEvents } from './composables/useEvents';
 import type { TimelineEvent } from 'shared/types';
 
 const { events, fetchEvents } = useEvents();
 const selectedEventId = ref<string | null>(null);
 const viewMode = ref<'timeline' | 'list'>('timeline');
+const showForm = ref(false);
+const editingEventId = ref<string | null>(null);
 
 onMounted(() => {
   fetchEvents();
@@ -25,6 +28,28 @@ function closeDetail() {
 function navigateToEvent(event: TimelineEvent) {
   selectedEventId.value = event.id;
 }
+
+function openCreateForm() {
+  editingEventId.value = null;
+  showForm.value = true;
+}
+
+function openEditForm(id: string) {
+  editingEventId.value = id;
+  showForm.value = true;
+}
+
+function closeForm() {
+  showForm.value = false;
+  editingEventId.value = null;
+}
+
+function onEventSaved() {
+  fetchEvents();
+  if (editingEventId.value) {
+    selectedEventId.value = editingEventId.value;
+  }
+}
 </script>
 
 <template>
@@ -35,27 +60,34 @@ function navigateToEvent(event: TimelineEvent) {
           <h1 class="header-title">Timeline</h1>
           <p class="header-subtitle">Interactive historical timeline with relationship mapping</p>
         </div>
-        <div class="view-toggle">
-          <button
-            class="btn"
-            :class="viewMode === 'timeline' ? 'btn-active' : 'btn-ghost'"
-            @click="viewMode = 'timeline'"
-          >
-            Timeline
-          </button>
-          <button
-            class="btn"
-            :class="viewMode === 'list' ? 'btn-active' : 'btn-ghost'"
-            @click="viewMode = 'list'"
-          >
-            Cards
-          </button>
+        <div class="header-actions">
+          <div class="view-toggle">
+            <button
+              class="btn"
+              :class="viewMode === 'timeline' ? 'btn-active' : 'btn-ghost'"
+              @click="viewMode = 'timeline'"
+            >
+              Timeline
+            </button>
+            <button
+              class="btn"
+              :class="viewMode === 'list' ? 'btn-active' : 'btn-ghost'"
+              @click="viewMode = 'list'"
+            >
+              Cards
+            </button>
+          </div>
+          <button class="btn btn-primary" @click="openCreateForm">+ Add Event</button>
         </div>
       </div>
     </header>
 
     <main class="main container">
-      <div class="content">
+      <div v-if="showForm" class="form-overlay">
+        <EventForm :event-id="editingEventId" @close="closeForm" @saved="onEventSaved" />
+      </div>
+
+      <div v-else class="content">
         <div v-if="viewMode === 'timeline'" class="timeline-section">
           <Timeline :events="events" :selected-event-id="selectedEventId" @select="selectEvent" />
         </div>
@@ -70,6 +102,7 @@ function navigateToEvent(event: TimelineEvent) {
               :event-id="selectedEventId"
               @close="closeDetail"
               @navigate="navigateToEvent"
+              @edit="openEditForm(selectedEventId!)"
             />
           </div>
         </div>
@@ -95,6 +128,7 @@ function navigateToEvent(event: TimelineEvent) {
   justify-content: space-between;
   padding-top: 1rem;
   padding-bottom: 1rem;
+  gap: 1rem;
 }
 
 .header-title {
@@ -109,6 +143,12 @@ function navigateToEvent(event: TimelineEvent) {
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .view-toggle {
   display: flex;
   gap: 0.5rem;
@@ -117,6 +157,10 @@ function navigateToEvent(event: TimelineEvent) {
 .main {
   padding-top: 2rem;
   padding-bottom: 2rem;
+}
+
+.form-overlay {
+  padding: 1rem 0;
 }
 
 .content {
@@ -143,6 +187,18 @@ function navigateToEvent(event: TimelineEvent) {
     position: sticky;
     top: 2rem;
     align-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>

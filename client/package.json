@@ -10,6 +10,10 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@tiptap/extension-link": "^3.14.0",
+    "@tiptap/extension-placeholder": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
+    "@tiptap/vue-3": "^3.14.0",
     "shared": "*",
     "vis-data": "^8.0.3",
     "vis-timeline": "^8.5.0",
