@@ -99,6 +99,14 @@ repos:
         stages: [pre-commit]
         pass_filenames: false
 
+      - id: vitest
+        name: Run Tests
+        entry: npm test
+        language: system
+        types: [ts]
+        stages: [pre-commit]
+        pass_filenames: false
+
       # Strip Claude Code branding from commit messages
       - id: prepare-commit-msg
         name: Strip AI branding from commits
