@@ -20,5 +20,4 @@ dist/
 # SQLite WAL files (temporary, recreated on use)
 *.db-shm
 *.db-wal
-.planning/
 .planning
