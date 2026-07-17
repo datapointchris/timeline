@@ -11,10 +11,9 @@ API + SQLite, served as a single Node container in production.
 - **Never edit a live migration file under `server/migrations/`** after it has
   been pushed to main. Migrations are append-only — fix forward by writing a
   new one.
-- **Never use `drizzle-kit push`** for production-bound changes. `push` skips
-  the `__drizzle_migrations` ledger, so the next deploy will try to re-apply
-  migrations and fail. Always run `npm run db:generate`, commit the SQL, and
-  let the next deploy apply it on container start.
+- **Schema changes go through `npm run db:generate`** → commit the SQL → next
+  deploy applies it on container start. (The `drizzle-kit push` prohibition is a
+  global JS rule.)
 
 ## Stack
 
@@ -65,6 +64,8 @@ Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose
 on timeline-lxc (10.0.20.13 / CTID 113). See `~/homelab/containers/timeline-lxc/README.md`
 for the LXC runbook.
 
+JavaScript/Node.js conventions (lockfile pairing, Dockerfile Node versioning, drizzle-kit push): see global `~/.claude/CLAUDE.md`.
+
 Things to know when changing this repo:
 
 - **Anything pushed to `main` ships within ~3 minutes.** No manual deploy step.
@@ -75,13 +76,9 @@ Things to know when changing this repo:
   `server/src/db/schema.ts` → run `npm run db:generate` → commit the new SQL
   file in `server/migrations/` along with the schema change. The next deploy
   applies it automatically on container start.
-- **Both `Dockerfile` stages must match local Node major version.** Currently
-  `node:24-alpine`. If your local is on a different major, npm lockfile
-  formats may diverge between npm 10 and 11 and CI will fail with `Missing:
-<pkg>@<ver> from lock file`. When updating Node, update both Dockerfile
-  stages together.
-- **`package.json` and `package-lock.json` must be committed together.** CI
-  uses `npm ci` which is strict about lockfile/manifest agreement.
+- **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages —
+  keep them in sync with local per the global Dockerfile-Node and lockfile-pairing
+  rules.
 - **Production DB lives at `/var/db/timeline/timeline.db` on the LXC**, never
   in the image. The bind mount survives every `docker compose up`. Local
   `data/timeline.db` is dev-only and gitignored.
