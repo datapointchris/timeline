@@ -1,0 +1,87 @@
+version: '3'
+
+# Three npm workspaces — client, server, shared — plus a compose stack and
+# drizzle migrations, none of which npm reaches.
+#
+# Every JS verb delegates to the root package.json script rather than
+# reimplementing the workspace fan-out. package.json stays the one place a
+# command is written; this file is the index of what can be run.
+
+tasks:
+  default:
+    desc: Show available tasks
+    silent: true
+    cmds:
+      - task --list
+
+  dev:
+    desc: Run the client and server together
+    cmds:
+      - npm run dev
+
+  lint:
+    desc: Lint every workspace
+    cmds:
+      - npm run lint
+
+  lint:fix:
+    desc: Lint and autofix every workspace
+    cmds:
+      - npm run lint:fix
+
+  format:
+    desc: Format every workspace
+    cmds:
+      - npm run format
+
+  typecheck:
+    desc: Type check every workspace
+    cmds:
+      - npm run typecheck
+
+  test:
+    desc: Run the server test suite
+    cmds:
+      - npm run test
+
+  build:
+    desc: Build every workspace
+    cmds:
+      - npm run build
+
+  check:
+    desc: Everything CI checks, in CI's order
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+      - task: build
+
+  db:generate:
+    desc: Generate a drizzle migration from the current schema
+    # Never `drizzle-kit push`: it skips the __drizzle_migrations ledger, so the
+    # next deploy re-applies every migration and fails.
+    dir: server
+    cmds:
+      - npm run db:generate
+
+  db:seed:
+    desc: Seed the development database
+    dir: server
+    cmds:
+      - npm run db:seed
+
+  compose:up:
+    desc: Start the stack in the background
+    cmds:
+      - docker compose up -d
+
+  compose:down:
+    desc: Stop the stack
+    cmds:
+      - docker compose down
+
+  compose:logs:
+    desc: Follow the stack's logs
+    cmds:
+      - docker compose logs -f
