@@ -73,33 +73,18 @@ repos:
         stages: [pre-commit]
         args: [--skip, '*.lock,package-lock.json,*.db']
 
-  # TypeScript/JavaScript linting and formatting
   - repo: local
     hooks:
-      - id: eslint
-        name: ESLint
-        entry: npx eslint --fix
+      - id: prepare-commit-msg
+        name: Strip AI branding from commits
+        entry: bash -c 'exec "$HOME/.claude/hooks/prepare-commit-msg" "$@"' --
         language: system
-        types: [ts, tsx, javascript, jsx]
-        stages: [pre-commit]
-        pass_filenames: true
+        always_run: true
+        stages: [prepare-commit-msg]
 
-      - id: prettier
-        name: Prettier
-        entry: npx prettier --write --ignore-unknown
-        language: system
-        types_or: [ts, tsx, javascript, jsx, json, css, scss, html, vue, markdown, yaml]
-        stages: [pre-commit]
-        pass_filenames: true
-
-      - id: typescript-check
-        name: TypeScript Type Check
-        entry: npm run typecheck
-        language: system
-        types_or: [ts, vue]
-        stages: [pre-commit]
-        pass_filenames: false
-
+# > custom:after:vue - Server test suite
+  - repo: local
+    hooks:
       - id: vitest
         name: Run Tests
         entry: npm test
@@ -107,11 +92,3 @@ repos:
         types: [ts]
         stages: [pre-commit]
         pass_filenames: false
-
-      # Strip Claude Code branding from commit messages
-      - id: prepare-commit-msg
-        name: Strip AI branding from commits
-        entry: /Users/chris/.claude/hooks/prepare-commit-msg
-        language: system
-        always_run: true
-        stages: [prepare-commit-msg]
