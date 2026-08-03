@@ -16,11 +16,11 @@ RUN npm ci
 # Build all workspaces. shared is type-only (its build is a no-op echo),
 # server compiles via tsc to server/dist, client builds the Vite SPA to client/dist.
 COPY . .
-RUN npm run build
-
-# Drop dev dependencies in place. This produces a single hoisted node_modules
-# tree we can copy into the runtime image without re-running npm.
-RUN npm prune --omit=dev
+# Pruning in the same layer as the build keeps the dev dependencies out of the
+# image rather than leaving them in an earlier layer for a later one to hide.
+# The prune produces a single hoisted node_modules tree the runtime stage can
+# copy without re-running npm.
+RUN npm run build && npm prune --omit=dev
 
 FROM node:24-alpine
 WORKDIR /app
