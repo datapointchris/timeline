@@ -1,0 +1,39 @@
+# forge-toolchain: 11
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+
+  vue-client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+
+      - uses: actions/checkout@v7
+
+      # generated:vue-client
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          # Action inputs resolve from the workspace root, not the job's
+          # working-directory, so this needs the component path.
+          cache-dependency-path: "client/package-lock.json"
+
+      - run: npm ci
+
+      # Not every frontend defines lint yet; --if-present keeps the rollout
+      # from hard-failing on a missing script.
+      - run: npm run lint --if-present
+
+      - run: npm run build
