@@ -12,8 +12,7 @@ API + SQLite, served as a single Node container in production.
   been pushed to main. Migrations are append-only — fix forward by writing a
   new one.
 - **Schema changes go through `npm run db:generate`** → commit the SQL → next
-  deploy applies it on container start. (The `drizzle-kit push` prohibition is a
-  global JS rule.)
+  deploy applies it on container start.
 
 ## Stack
 
@@ -64,24 +63,19 @@ Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose
 on timeline-lxc (10.0.20.13 / CTID 113). See `~/homelab/containers/timeline-lxc/README.md`
 for the LXC runbook.
 
-JavaScript/Node.js conventions (lockfile pairing, Dockerfile Node versioning, drizzle-kit push): see global `~/.claude/CLAUDE.md`.
+JavaScript/Node.js conventions (lockfile pairing, Dockerfile Node versioning, drizzle-kit push): see `~/dev/standards/frontend.md`.
 
 Things to know when changing this repo:
 
-- **Anything pushed to `main` ships within ~3 minutes.** No manual deploy step.
-  Test locally before pushing, especially for changes that touch
-  `server/src/db/`, `server/src/routes/`, or anything in the runtime hot path.
 - **Database migrations apply on app startup** via Drizzle's migrator in
   `server/src/db/index.ts`. Workflow for a schema change: edit
   `server/src/db/schema.ts` → run `npm run db:generate` → commit the new SQL
   file in `server/migrations/` along with the schema change. The next deploy
   applies it automatically on container start.
-- **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages —
-  keep them in sync with local per the global Dockerfile-Node and lockfile-pairing
-  rules.
-- **Production DB lives at `/var/db/timeline/timeline.db` on the LXC**, never
-  in the image. The bind mount survives every `docker compose up`. Local
-  `data/timeline.db` is dev-only and gitignored.
+- **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages.
+- **This repo's production database is `/var/db/timeline/timeline.db`**; the
+  dev-only copy is `data/timeline.db`, gitignored. The host-path rule and the
+  push-is-a-deploy rule are both in `~/dev/standards/infrastructure.md`.
 - **Backups run nightly** via backup-lxc → NAS → Backblaze B2 (30-snapshot
   retention). Restore procedure documented in `~/homelab/docs/backups.md`.
   SQLite snapshots use `sqlite3 .backup` (not raw `cp`) to avoid torn-page
