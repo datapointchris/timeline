@@ -63,7 +63,7 @@ Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose
 on timeline-lxc (10.0.20.13 / CTID 113). See `~/homelab/containers/timeline-lxc/README.md`
 for the LXC runbook.
 
-JavaScript/Node.js conventions (lockfile pairing, Dockerfile Node versioning, drizzle-kit push): see `~/dev/standards/frontend.md`.
+JavaScript/Node.js conventions (lockfile pairing, Dockerfile Node versioning, drizzle-kit push): see `standards/frontend.md`.
 
 Things to know when changing this repo:
 
@@ -75,7 +75,7 @@ Things to know when changing this repo:
 - **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages.
 - **This repo's production database is `/var/db/timeline/timeline.db`**; the
   dev-only copy is `data/timeline.db`, gitignored. The host-path rule and the
-  push-is-a-deploy rule are both in `~/dev/standards/infrastructure.md`.
+  push-is-a-deploy rule are both in `standards/infrastructure.md`.
 - **Backups run nightly** via backup-lxc → NAS → Backblaze B2 (30-snapshot
   retention). Restore procedure documented in `~/homelab/docs/backups.md`.
   SQLite snapshots use `sqlite3 .backup` (not raw `cp`) to avoid torn-page
