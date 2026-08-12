@@ -49,8 +49,8 @@ initialization path. Subsequent migrations should be normal Drizzle output.
 ```bash
 npm install               # install all workspaces (server, client, shared)
 npm run dev               # concurrently runs server (:3000) and Vite dev (:5173 with /api proxy)
-npm run db:seed           # seed dev DB with sample events + relationships
-npm run db:generate       # after editing schema.ts → produces a new migration SQL file
+npm --prefix server run db:seed      # seed dev DB with sample events + relationships
+npm --prefix server run db:generate  # after editing schema.ts → produces a new migration SQL file
 npm run lint
 npm run typecheck
 npm run test

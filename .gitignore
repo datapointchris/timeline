@@ -17,7 +17,11 @@ dist/
 # Build outputs
 *.tsbuildinfo
 
-# SQLite WAL files (temporary, recreated on use)
+# The dev database and its WAL sidecars. Production lives at
+# /var/db/timeline/timeline.db on the LXC and never enters the repo.
+# Regenerate a local one with `npm --prefix server run db:seed`.
+data/
+*.db
 *.db-shm
 *.db-wal
 .planning
