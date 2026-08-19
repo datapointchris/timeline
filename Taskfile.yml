@@ -14,6 +14,21 @@ tasks:
     cmds:
       - task --list
 
+  # A worktree is a clean checkout, so everything gitignored is absent. The npm
+  # install runs at the root because that is where the lockfile and the three
+  # workspaces are; .planning has no manifest and is recreated from wherever the
+  # primary points. PRIMARY is derived rather than configured — a worktree
+  # shares the primary's git directory, so this resolves from anywhere and
+  # no-ops when run in the primary itself.
+  setup:
+    desc: Make a fresh checkout runnable
+    vars:
+      PRIMARY:
+        sh: git rev-parse --path-format=absolute --git-common-dir | sed 's|/\.git$||'
+    cmds:
+      - npm ci
+      - ln -sfn "$(readlink {{.PRIMARY}}/.planning)" .planning
+
   dev:
     desc: Run the client and server together
     cmds:
