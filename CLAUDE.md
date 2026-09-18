@@ -11,22 +11,9 @@ API + SQLite, served as a single Node container in production.
 - **Never edit a live migration file under `server/migrations/`** after it has
   been pushed to main. Migrations are append-only — fix forward by writing a
   new one.
-- **Schema changes go through `npm run db:generate`** → commit the SQL → next
-  deploy applies it on container start.
-
-## Stack
-
-- **Server:** Express 4 + TypeScript, compiled with `tsc` to `server/dist`,
-  run with `node dist/index.js` in production.
-- **Client:** Vue 3 + Vite SPA, built to `client/dist`. Served by the same
-  Express container in production via `express.static` + an `app.get('*')`
-  fallback for client-side routing.
-- **Database:** SQLite (better-sqlite3) with WAL mode. Schema is authored as
-  Drizzle ORM table definitions in `server/src/db/schema.ts`; migrations are
-  generated with `drizzle-kit` and applied at server startup via
-  `drizzle-orm/better-sqlite3/migrator`'s `migrate()`.
-- **Logging:** pino → JSON to stdout in production, pino-pretty in dev.
-  Promtail on the LXC scrapes Docker logs into Loki for query in Grafana.
+- **Schema changes go through `npm --prefix server run db:generate`** after
+  editing `server/src/db/schema.ts` → commit the SQL → next deploy applies it
+  on container start.
 
 ### Drizzle hybrid mode
 
@@ -46,36 +33,18 @@ initialization path. Subsequent migrations should be normal Drizzle output.
 
 ## Development
 
-```bash
-npm install               # install all workspaces (server, client, shared)
-npm run dev               # concurrently runs server (:3000) and Vite dev (:5173 with /api proxy)
-npm --prefix server run db:seed      # seed dev DB with sample events + relationships
-npm --prefix server run db:generate  # after editing schema.ts → produces a new migration SQL file
-npm run lint
-npm run typecheck
-npm run test
-```
+`npm run dev` runs the server on :3000 and Vite on :5173, which proxies `/api`.
+`npm --prefix server run db:seed` seeds the dev DB with sample events and relationships.
 
 ## Deployment
 
 **Live at <https://timeline.ichrisbirch.com>** behind Authelia ForwardAuth.
 Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose pull && up`
-on timeline-lxc (10.0.20.13 / CTID 113). See `~/homelab/containers/timeline-lxc/README.md`
-for the LXC runbook.
-
-JavaScript/Node.js conventions (lockfile pairing, Dockerfile Node versioning, drizzle-kit push): see `standards/frontend.md`.
+on timeline-lxc.
 
 Things to know when changing this repo:
 
-- **Database migrations apply on app startup** via Drizzle's migrator in
-  `server/src/db/index.ts`. Workflow for a schema change: edit
-  `server/src/db/schema.ts` → run `npm run db:generate` → commit the new SQL
-  file in `server/migrations/` along with the schema change. The next deploy
-  applies it automatically on container start.
 - **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages.
-- **This repo's production database is `/var/db/timeline/timeline.db`**; the
-  dev-only copy is `data/timeline.db`, gitignored. The host-path rule and the
-  push-is-a-deploy rule are both in `standards/infrastructure.md`.
 - **Backups run nightly** via backup-lxc → NAS → Backblaze B2 (30-snapshot
   retention). Restore procedure documented in `~/homelab/docs/backups.md`.
   SQLite snapshots use `sqlite3 .backup` (not raw `cp`) to avoid torn-page
@@ -85,25 +54,5 @@ Things to know when changing this repo:
   Docker runtime image deliberately does not include `shared/` in its layout
   — only the compiled `server/dist/` and `client/dist/` plus pruned
   `node_modules/`.
-
-## K8s readiness
-
-Code is intentionally K8s-ready so the eventual k3s migration is a manifest
-write, not a rewrite:
-
-- `/api/health` — liveness probe target. Returns 200 OK when the server is
-  responsive, regardless of DB state.
-- `/api/ready` — readiness probe target. Pings the DB and returns 503 if it
-  fails. Used by Docker compose healthcheck and k3s readinessProbe.
-- All config is env-driven: `PORT`, `NODE_ENV`, `DATABASE_PATH`,
-  `MIGRATIONS_FOLDER`, `LOG_LEVEL`, `STATIC_DIR`. No hardcoded paths.
-- Single bind-mount for SQLite. Translates 1:1 to a `PersistentVolumeClaim`
-  (ReadWriteOnce, single replica) when k3s comes online.
-- SIGTERM handler does a 10s HTTP drain, closes the DB, exits 0. Pod
-  termination won't lose in-flight requests or corrupt the DB.
-- Structured JSON logs to stdout. No file sinks, no log rotation in-process.
-
-When k3s exists, the migration is: write a `Deployment` + `Service` +
-`Ingress` + `PVC` from the docker-compose.yml; switch the homelab Traefik
-route from `http://10.0.20.13:80` to the k3s ingress; tear down the LXC. No
-app code changes.
+- **`/api/health` is liveness** and answers 200 whatever the DB state; the compose
+  healthcheck probes it. **`/api/ready` is readiness**: it pings the DB and returns 503 on failure.
