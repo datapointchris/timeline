@@ -1,53 +1,44 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { api } from '../api/client';
-import type { Tag, EventType } from 'shared/types';
+import { ref, watch, onMounted } from 'vue'
+import { api } from '../api/client'
+import type { Tag, EventType } from 'shared/types'
 
 const props = defineProps<{
-  type?: EventType;
-  tag?: string;
-}>();
+  type?: EventType
+  tag?: string
+}>()
 
 const emit = defineEmits<{
-  filter: [params: { search?: string; type?: EventType; tag?: string }];
-}>();
+  filter: [params: { search?: string; type?: EventType; tag?: string }]
+}>()
 
-const searchQuery = ref('');
-const selectedType = ref<EventType | ''>(props.type || '');
-const selectedTag = ref(props.tag || '');
-const allTags = ref<Tag[]>([]);
+const searchQuery = ref('')
+const selectedType = ref<EventType | ''>(props.type || '')
+const selectedTag = ref(props.tag || '')
+const allTags = ref<Tag[]>([])
 
 // Sync with external props
 watch(
   () => props.type,
-  newType => {
-    selectedType.value = newType || '';
-  }
-);
+  (newType) => {
+    selectedType.value = newType || ''
+  },
+)
 
 watch(
   () => props.tag,
-  newTag => {
-    selectedTag.value = newTag || '';
-  }
-);
+  (newTag) => {
+    selectedTag.value = newTag || ''
+  },
+)
 
-const eventTypes: EventType[] = [
-  'book',
-  'person',
-  'event',
-  'movement',
-  'idea',
-  'artwork',
-  'invention',
-  'other',
-];
+const eventTypes: EventType[] = ['book', 'person', 'event', 'movement', 'idea', 'artwork', 'invention', 'other']
 
 async function loadTags() {
   try {
-    allTags.value = await api.tags.list();
+    allTags.value = await api.tags.list()
   } catch {
-    allTags.value = [];
+    allTags.value = []
   }
 }
 
@@ -56,37 +47,37 @@ function emitFilter() {
     search: searchQuery.value.trim() || undefined,
     type: selectedType.value || undefined,
     tag: selectedTag.value || undefined,
-  });
+  })
 }
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 watch(searchQuery, () => {
-  if (searchTimeout) clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(emitFilter, 300);
-});
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(emitFilter, 300)
+})
 
-watch([selectedType, selectedTag], emitFilter);
+watch([selectedType, selectedTag], emitFilter)
 
 function clearFilters() {
-  searchQuery.value = '';
-  selectedType.value = '';
-  selectedTag.value = '';
-  emitFilter();
+  searchQuery.value = ''
+  selectedType.value = ''
+  selectedTag.value = ''
+  emitFilter()
 }
 
-const hasActiveFilters = ref(false);
+const hasActiveFilters = ref(false)
 watch(
   [searchQuery, selectedType, selectedTag],
   ([search, type, tag]) => {
-    hasActiveFilters.value = !!(search || type || tag);
+    hasActiveFilters.value = !!(search || type || tag)
   },
-  { immediate: true }
-);
+  { immediate: true },
+)
 
 onMounted(() => {
-  loadTags();
-});
+  loadTags()
+})
 </script>
 
 <template>
@@ -99,38 +90,53 @@ onMounted(() => {
           width="16"
           height="16"
           viewBox="0 0 20 20"
-          fill="currentColor"
-        >
+          fill="currentColor">
           <path
             fill-rule="evenodd"
             d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-            clip-rule="evenodd"
-          />
+            clip-rule="evenodd" />
         </svg>
         <input
           v-model="searchQuery"
           type="text"
           class="search-input"
-          placeholder="Search events..."
-        />
+          placeholder="Search events..." />
       </div>
     </div>
 
     <div class="filter-group">
-      <select v-model="selectedType" class="filter-select">
+      <select
+        v-model="selectedType"
+        class="filter-select">
         <option value="">All types</option>
-        <option v-for="t in eventTypes" :key="t" :value="t">{{ t }}</option>
+        <option
+          v-for="t in eventTypes"
+          :key="t"
+          :value="t">
+          {{ t }}
+        </option>
       </select>
     </div>
 
     <div class="filter-group">
-      <select v-model="selectedTag" class="filter-select">
+      <select
+        v-model="selectedTag"
+        class="filter-select">
         <option value="">All tags</option>
-        <option v-for="tag in allTags" :key="tag.id" :value="tag.name">{{ tag.name }}</option>
+        <option
+          v-for="tag in allTags"
+          :key="tag.id"
+          :value="tag.name">
+          {{ tag.name }}
+        </option>
       </select>
     </div>
 
-    <button v-if="hasActiveFilters" type="button" class="clear-btn" @click="clearFilters">
+    <button
+      v-if="hasActiveFilters"
+      type="button"
+      class="clear-btn"
+      @click="clearFilters">
       Clear
     </button>
   </div>

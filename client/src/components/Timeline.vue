@@ -1,72 +1,72 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { Timeline } from 'vis-timeline/standalone';
-import { DataSet } from 'vis-data/standalone';
-import type { TimelineEvent } from 'shared/types';
-import 'vis-timeline/styles/vis-timeline-graph2d.css';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { Timeline } from 'vis-timeline/standalone'
+import { DataSet } from 'vis-data/standalone'
+import type { TimelineEvent } from 'shared/types'
+import 'vis-timeline/styles/vis-timeline-graph2d.css'
 
 const props = defineProps<{
-  events: readonly TimelineEvent[];
-  selectedEventIds?: string[];
-}>();
+  events: readonly TimelineEvent[]
+  selectedEventIds?: string[]
+}>()
 
 const emit = defineEmits<{
-  select: [event: TimelineEvent];
-  deselect: [event: TimelineEvent];
-}>();
+  select: [event: TimelineEvent]
+  deselect: [event: TimelineEvent]
+}>()
 
-const containerRef = ref<HTMLDivElement | null>(null);
+const containerRef = ref<HTMLDivElement | null>(null)
 
-let timeline: Timeline | null = null;
+let timeline: Timeline | null = null
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let items: DataSet<any> | null = null;
-let hasInitialFit = false;
+let items: DataSet<any> | null = null
+let hasInitialFit = false
 
 interface TimelineItem {
-  id: string;
-  content: string;
-  start: Date;
-  title?: string;
-  type: 'box';
+  id: string
+  content: string
+  start: Date
+  title?: string
+  type: 'box'
 }
 
 function parseDate(dateStr: string | null, isBce: boolean): Date | null {
-  if (!dateStr) return null;
+  if (!dateStr) return null
 
-  let year: number;
-  let month = 0;
-  let day = 1;
+  let year: number
+  let month = 0
+  let day = 1
 
   if (dateStr.includes('-')) {
-    const parts = dateStr.split('-');
-    year = parseInt(parts[0], 10);
-    if (parts[1]) month = parseInt(parts[1], 10) - 1;
-    if (parts[2]) day = parseInt(parts[2], 10);
+    const parts = dateStr.split('-')
+    year = parseInt(parts[0], 10)
+    if (parts[1]) month = parseInt(parts[1], 10) - 1
+    if (parts[2]) day = parseInt(parts[2], 10)
   } else {
-    year = parseInt(dateStr, 10);
+    year = parseInt(dateStr, 10)
   }
 
   if (isBce) {
-    year = -year + 1;
+    year = -year + 1
   }
 
-  const date = new Date(year, month, day);
-  date.setFullYear(year);
-  return date;
+  const date = new Date(year, month, day)
+  date.setFullYear(year)
+  return date
 }
 
 function eventsToItems(events: readonly TimelineEvent[]) {
-  const result: TimelineItem[] = [];
+  const result: TimelineItem[] = []
   for (const event of events) {
-    if (!event.date_start) continue;
-    const start = parseDate(event.date_start, event.is_bce);
-    if (!start) continue;
+    if (!event.date_start) continue
+    const start = parseDate(event.date_start, event.is_bce)
+    if (!start) continue
 
     const dateStr =
       event.date_display ||
       (event.date_end && event.date_end !== event.date_start
         ? `${event.date_start}–${event.date_end}${event.is_bce ? ' BCE' : ''}`
-        : `${event.date_start}${event.is_bce ? ' BCE' : ''}`);
+        : `${event.date_start}${event.is_bce ? ' BCE' : ''}`)
 
     const item: TimelineItem = {
       id: event.id,
@@ -74,21 +74,21 @@ function eventsToItems(events: readonly TimelineEvent[]) {
       start,
       title: `${event.title}\n${dateStr}`,
       type: 'box',
-    };
+    }
 
-    result.push(item);
+    result.push(item)
   }
-  return result;
+  return result
 }
 
 function initTimeline() {
-  if (!containerRef.value) return;
+  if (!containerRef.value) return
 
-  items = new DataSet(eventsToItems(props.events));
+  items = new DataSet(eventsToItems(props.events))
 
   // Set min/max to allow BCE dates
-  const minDate = new Date(-1000, 0, 1); // 1000 BCE
-  const maxDate = new Date(2100, 0, 1); // 2100 CE
+  const minDate = new Date(-1000, 0, 1) // 1000 BCE
+  const maxDate = new Date(2100, 0, 1) // 2100 CE
 
   const options = {
     height: '400px',
@@ -135,95 +135,93 @@ function initTimeline() {
       overflowMethod: 'cap' as const,
       delay: 0,
     },
-  };
+  }
 
-  timeline = new Timeline(containerRef.value, items, options);
+  timeline = new Timeline(containerRef.value, items, options)
 
   // Ctrl+scroll to pan horizontally
   containerRef.value.addEventListener(
     'wheel',
     (e: WheelEvent) => {
       if (e.ctrlKey && timeline) {
-        e.preventDefault();
-        e.stopPropagation();
-        const win = timeline.getWindow();
-        const range = win.end.getTime() - win.start.getTime();
-        const delta = (e.deltaY / 300) * range;
-        timeline.setWindow(
-          new Date(win.start.getTime() + delta),
-          new Date(win.end.getTime() + delta),
-          { animation: false }
-        );
+        e.preventDefault()
+        e.stopPropagation()
+        const win = timeline.getWindow()
+        const range = win.end.getTime() - win.start.getTime()
+        const delta = (e.deltaY / 300) * range
+        timeline.setWindow(new Date(win.start.getTime() + delta), new Date(win.end.getTime() + delta), { animation: false })
       }
     },
-    { passive: false, capture: true }
-  );
+    { passive: false, capture: true },
+  )
 
   timeline.on('select', (properties: { items: string[] }) => {
     if (properties.items.length > 0) {
-      const eventId = properties.items[0];
-      const event = props.events.find(e => e.id === eventId);
+      const eventId = properties.items[0]
+      const event = props.events.find((e) => e.id === eventId)
       if (event) {
         if (props.selectedEventIds?.includes(eventId)) {
-          emit('deselect', event);
+          emit('deselect', event)
         } else {
-          emit('select', event);
+          emit('select', event)
         }
       }
     }
-  });
+  })
 
   if (props.events.length > 0) {
     nextTick(() => {
-      timeline?.fit();
-    });
+      timeline?.fit()
+    })
   }
 }
 
 watch(
   () => props.events,
-  newEvents => {
+  (newEvents) => {
     if (items && timeline) {
-      items.clear();
-      items.add(eventsToItems(newEvents));
+      items.clear()
+      items.add(eventsToItems(newEvents))
       // Re-apply selection after updating items
-      timeline.setSelection(props.selectedEventIds || []);
+      timeline.setSelection(props.selectedEventIds || [])
       // Fit to all events on first load only
       if (!hasInitialFit && newEvents.length > 0) {
-        hasInitialFit = true;
+        hasInitialFit = true
         nextTick(() => {
-          timeline?.fit();
-        });
+          timeline?.fit()
+        })
       }
     }
   },
-  { deep: true }
-);
+  { deep: true },
+)
 
 watch(
   () => props.selectedEventIds,
-  ids => {
+  (ids) => {
     if (timeline) {
-      timeline.setSelection(ids || []);
+      timeline.setSelection(ids || [])
     }
-  }
-);
+  },
+)
 
 onMounted(() => {
-  initTimeline();
-});
+  initTimeline()
+})
 
 onUnmounted(() => {
   if (timeline) {
-    timeline.destroy();
-    timeline = null;
+    timeline.destroy()
+    timeline = null
   }
-});
+})
 </script>
 
 <template>
   <div class="timeline-wrapper">
-    <div ref="containerRef" class="timeline-container"></div>
+    <div
+      ref="containerRef"
+      class="timeline-container"></div>
   </div>
 </template>
 

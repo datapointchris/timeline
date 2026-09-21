@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue';
-import { useEditor, EditorContent } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
-import { useEvents } from '../composables/useEvents';
-import { api } from '../api/client';
-import RelationshipPicker from './RelationshipPicker.vue';
+import { ref, watch, onMounted, computed } from 'vue'
+import { useEditor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Link from '@tiptap/extension-link'
+import Placeholder from '@tiptap/extension-placeholder'
+import { useEvents } from '../composables/useEvents'
+import { api } from '../api/client'
+import RelationshipPicker from './RelationshipPicker.vue'
 import type {
   CreateEventInput,
   UpdateEventInput,
@@ -15,40 +15,40 @@ import type {
   Tag,
   CreateRelationshipInput,
   RelationshipWithEvent,
-} from 'shared/types';
+} from 'shared/types'
 
 const props = defineProps<{
-  eventId?: string | null;
-}>();
+  eventId?: string | null
+}>()
 
 const emit = defineEmits<{
-  close: [];
-  saved: [];
-}>();
+  close: []
+  saved: []
+}>()
 
-const { selectedEvent, fetchEvent, createEvent, updateEvent } = useEvents();
-const isEditing = ref(false);
-const saving = ref(false);
-const error = ref<string | null>(null);
-const allTags = ref<Tag[]>([]);
-const tagInput = ref('');
-const showRelationshipPicker = ref(false);
-const pendingRelationships = ref<CreateRelationshipInput[]>([]);
-const existingRelationships = ref<RelationshipWithEvent[]>([]);
-const relationshipsToDelete = ref<number[]>([]);
+const { selectedEvent, fetchEvent, createEvent, updateEvent } = useEvents()
+const isEditing = ref(false)
+const saving = ref(false)
+const error = ref<string | null>(null)
+const allTags = ref<Tag[]>([])
+const tagInput = ref('')
+const showRelationshipPicker = ref(false)
+const pendingRelationships = ref<CreateRelationshipInput[]>([])
+const existingRelationships = ref<RelationshipWithEvent[]>([])
+const relationshipsToDelete = ref<number[]>([])
 
 const form = ref<{
-  id: string;
-  title: string;
-  summary: string;
-  details: string;
-  date_start: string;
-  date_end: string;
-  date_precision: DatePrecision | '';
-  date_display: string;
-  is_bce: boolean;
-  type: EventType | '';
-  tags: string[];
+  id: string
+  title: string
+  summary: string
+  details: string
+  date_start: string
+  date_end: string
+  date_precision: DatePrecision | ''
+  date_display: string
+  is_bce: boolean
+  type: EventType | ''
+  tags: string[]
 }>({
   id: '',
   title: '',
@@ -61,26 +61,10 @@ const form = ref<{
   is_bce: false,
   type: '',
   tags: [],
-});
+})
 
-const eventTypes: EventType[] = [
-  'book',
-  'person',
-  'event',
-  'movement',
-  'idea',
-  'artwork',
-  'invention',
-  'other',
-];
-const precisionTypes: DatePrecision[] = [
-  'exact',
-  'year',
-  'decade',
-  'century',
-  'approximate',
-  'uncertain',
-];
+const eventTypes: EventType[] = ['book', 'person', 'event', 'movement', 'idea', 'artwork', 'invention', 'other']
+const precisionTypes: DatePrecision[] = ['exact', 'year', 'decade', 'century', 'approximate', 'uncertain']
 
 const editor = useEditor({
   extensions: [
@@ -94,13 +78,13 @@ const editor = useEditor({
   ],
   content: '',
   onUpdate: ({ editor }) => {
-    form.value.details = editor.getHTML();
+    form.value.details = editor.getHTML()
   },
-});
+})
 
 async function loadTags() {
   try {
-    allTags.value = await api.tags.list();
+    allTags.value = await api.tags.list()
   } catch {
     // Silently ignore tag loading failures
   }
@@ -119,17 +103,17 @@ function resetForm() {
     is_bce: false,
     type: '',
     tags: [],
-  };
-  editor.value?.commands.setContent('');
-  pendingRelationships.value = [];
-  existingRelationships.value = [];
-  relationshipsToDelete.value = [];
-  showRelationshipPicker.value = false;
+  }
+  editor.value?.commands.setContent('')
+  pendingRelationships.value = []
+  existingRelationships.value = []
+  relationshipsToDelete.value = []
+  showRelationshipPicker.value = false
 }
 
 function loadEventData() {
   if (selectedEvent.value) {
-    const event = selectedEvent.value;
+    const event = selectedEvent.value
     form.value = {
       id: event.id,
       title: event.title,
@@ -141,82 +125,80 @@ function loadEventData() {
       date_display: event.date_display || '',
       is_bce: event.is_bce,
       type: event.type || '',
-      tags: event.tags.map(t => t.name),
-    };
-    editor.value?.commands.setContent(event.details || '');
-    existingRelationships.value = [...event.relationships];
-    isEditing.value = true;
+      tags: event.tags.map((t) => t.name),
+    }
+    editor.value?.commands.setContent(event.details || '')
+    existingRelationships.value = [...event.relationships]
+    isEditing.value = true
   }
 }
 
 function addTag() {
-  const tag = tagInput.value.trim().toLowerCase();
+  const tag = tagInput.value.trim().toLowerCase()
   if (tag && !form.value.tags.includes(tag)) {
-    form.value.tags.push(tag);
+    form.value.tags.push(tag)
   }
-  tagInput.value = '';
+  tagInput.value = ''
 }
 
 function removeTag(tag: string) {
-  form.value.tags = form.value.tags.filter(t => t !== tag);
+  form.value.tags = form.value.tags.filter((t) => t !== tag)
 }
 
 function selectSuggestedTag(tag: Tag) {
   if (!form.value.tags.includes(tag.name)) {
-    form.value.tags.push(tag.name);
+    form.value.tags.push(tag.name)
   }
-  tagInput.value = '';
+  tagInput.value = ''
 }
 
-const filteredTags = ref<Tag[]>([]);
-watch(tagInput, value => {
+const filteredTags = ref<Tag[]>([])
+watch(tagInput, (value) => {
   if (value.trim()) {
     filteredTags.value = allTags.value
-      .filter(t => t.name.toLowerCase().includes(value.toLowerCase()))
-      .filter(t => !form.value.tags.includes(t.name))
-      .slice(0, 5);
+      .filter((t) => t.name.toLowerCase().includes(value.toLowerCase()))
+      .filter((t) => !form.value.tags.includes(t.name))
+      .slice(0, 5)
   } else {
-    filteredTags.value = [];
+    filteredTags.value = []
   }
-});
+})
 
 const existingTargetIds = computed(() => {
-  const existing = existingRelationships.value
-    .filter(r => !relationshipsToDelete.value.includes(r.id))
-    .map(r => r.target_id);
-  const pending = pendingRelationships.value.map(r => r.target_id);
-  return [...existing, ...pending];
-});
+  const existing = existingRelationships.value.filter((r) => !relationshipsToDelete.value.includes(r.id)).map((r) => r.target_id)
+  const pending = pendingRelationships.value.map((r) => r.target_id)
+  return [...existing, ...pending]
+})
 
 function formatRelationType(type: string): string {
-  return type.replace(/_/g, ' ');
+  return type.replace(/_/g, ' ')
 }
 
 function addPendingRelationship(rel: CreateRelationshipInput) {
-  pendingRelationships.value.push(rel);
-  showRelationshipPicker.value = false;
+  pendingRelationships.value.push(rel)
+  showRelationshipPicker.value = false
 }
 
 function removePendingRelationship(index: number) {
-  pendingRelationships.value.splice(index, 1);
+  pendingRelationships.value.splice(index, 1)
 }
 
 function markRelationshipForDeletion(id: number) {
-  relationshipsToDelete.value.push(id);
+  relationshipsToDelete.value.push(id)
 }
 
 function restoreRelationship(id: number) {
-  relationshipsToDelete.value = relationshipsToDelete.value.filter(rid => rid !== id);
+  relationshipsToDelete.value = relationshipsToDelete.value.filter((rid) => rid !== id)
 }
 
 async function handleSubmit() {
   if (!form.value.id || !form.value.title) {
-    error.value = 'ID and title are required';
-    return;
+    error.value = 'ID and title are required'
+    return
   }
 
-  saving.value = true;
-  error.value = null;
+  saving.value = true
+  error.value = null
 
   try {
     if (isEditing.value) {
@@ -230,12 +212,12 @@ async function handleSubmit() {
         date_display: form.value.date_display || undefined,
         is_bce: form.value.is_bce,
         type: form.value.type || undefined,
-      };
-      await updateEvent(form.value.id, data);
+      }
+      await updateEvent(form.value.id, data)
 
       // Delete marked relationships
       for (const relId of relationshipsToDelete.value) {
-        await api.relationships.delete(relId);
+        await api.relationships.delete(relId)
       }
     } else {
       const data: CreateEventInput = {
@@ -250,8 +232,8 @@ async function handleSubmit() {
         is_bce: form.value.is_bce,
         type: form.value.type || undefined,
         tags: form.value.tags.length > 0 ? form.value.tags : undefined,
-      };
-      await createEvent(data);
+      }
+      await createEvent(data)
     }
 
     // Create new relationships
@@ -261,104 +243,131 @@ async function handleSubmit() {
         target_id: rel.target_id,
         type: rel.type,
         notes: rel.notes,
-      };
-      await api.relationships.create(relData);
+      }
+      await api.relationships.create(relData)
     }
 
-    emit('saved');
-    emit('close');
+    emit('saved')
+    emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to save event';
+    error.value = e instanceof Error ? e.message : 'Failed to save event'
   } finally {
-    saving.value = false;
+    saving.value = false
   }
 }
 
 watch(
   () => props.eventId,
-  async id => {
+  async (id) => {
     if (id) {
-      await fetchEvent(id);
-      loadEventData();
+      await fetchEvent(id)
+      loadEventData()
     } else {
-      resetForm();
-      isEditing.value = false;
+      resetForm()
+      isEditing.value = false
     }
   },
-  { immediate: true }
-);
+  { immediate: true },
+)
 
 onMounted(() => {
-  loadTags();
-});
+  loadTags()
+})
 </script>
 
 <template>
   <div class="event-form card">
     <div class="form-header">
       <h2 class="form-title">{{ isEditing ? 'Edit Event' : 'Create Event' }}</h2>
-      <button class="close-btn" @click="emit('close')">
+      <button
+        class="close-btn"
+        @click="emit('close')">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
           height="20"
           viewBox="0 0 20 20"
-          fill="currentColor"
-        >
+          fill="currentColor">
           <path
             fill-rule="evenodd"
             d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-            clip-rule="evenodd"
-          />
+            clip-rule="evenodd" />
         </svg>
       </button>
     </div>
 
-    <form class="form-body" @submit.prevent="handleSubmit">
-      <div v-if="error" class="error-box">{{ error }}</div>
+    <form
+      class="form-body"
+      @submit.prevent="handleSubmit">
+      <div
+        v-if="error"
+        class="error-box">
+        {{ error }}
+      </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label" for="event-id">ID</label>
+          <label
+            class="form-label"
+            for="event-id">
+            ID
+          </label>
           <input
             id="event-id"
             v-model="form.id"
             type="text"
             class="form-input"
             placeholder="unique-event-id"
-            :disabled="isEditing"
-          />
+            :disabled="isEditing" />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="event-type">Type</label>
-          <select id="event-type" v-model="form.type" class="form-input">
+          <label
+            class="form-label"
+            for="event-type">
+            Type
+          </label>
+          <select
+            id="event-type"
+            v-model="form.type"
+            class="form-input">
             <option value="">Select type...</option>
-            <option v-for="t in eventTypes" :key="t" :value="t">{{ t }}</option>
+            <option
+              v-for="t in eventTypes"
+              :key="t"
+              :value="t">
+              {{ t }}
+            </option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="event-title">Title</label>
+        <label
+          class="form-label"
+          for="event-title">
+          Title
+        </label>
         <input
           id="event-title"
           v-model="form.title"
           type="text"
           class="form-input"
-          placeholder="Event title"
-        />
+          placeholder="Event title" />
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="event-summary">Summary</label>
+        <label
+          class="form-label"
+          for="event-summary">
+          Summary
+        </label>
         <textarea
           id="event-summary"
           v-model="form.summary"
           class="form-input form-textarea"
           placeholder="Brief summary shown on event cards..."
-          rows="2"
-        ></textarea>
+          rows="2"></textarea>
       </div>
 
       <div class="form-group">
@@ -369,82 +378,104 @@ onMounted(() => {
               type="button"
               class="toolbar-btn"
               :class="{ active: editor?.isActive('bold') }"
-              @click="editor?.chain().focus().toggleBold().run()"
-            >
+              @click="editor?.chain().focus().toggleBold().run()">
               B
             </button>
             <button
               type="button"
               class="toolbar-btn"
               :class="{ active: editor?.isActive('italic') }"
-              @click="editor?.chain().focus().toggleItalic().run()"
-            >
+              @click="editor?.chain().focus().toggleItalic().run()">
               I
             </button>
             <button
               type="button"
               class="toolbar-btn"
               :class="{ active: editor?.isActive('heading', { level: 2 }) }"
-              @click="editor?.chain().focus().toggleHeading({ level: 2 }).run()"
-            >
+              @click="editor?.chain().focus().toggleHeading({ level: 2 }).run()">
               H2
             </button>
             <button
               type="button"
               class="toolbar-btn"
               :class="{ active: editor?.isActive('bulletList') }"
-              @click="editor?.chain().focus().toggleBulletList().run()"
-            >
+              @click="editor?.chain().focus().toggleBulletList().run()">
               List
             </button>
           </div>
-          <EditorContent :editor="editor" class="editor-content" />
+          <EditorContent
+            :editor="editor"
+            class="editor-content" />
         </div>
       </div>
 
       <div class="form-row form-row-3">
         <div class="form-group">
-          <label class="form-label" for="date-start">Start Date</label>
+          <label
+            class="form-label"
+            for="date-start">
+            Start Date
+          </label>
           <input
             id="date-start"
             v-model="form.date_start"
             type="text"
             class="form-input"
-            placeholder="1886 or 1886-07-04"
-          />
+            placeholder="1886 or 1886-07-04" />
         </div>
         <div class="form-group">
-          <label class="form-label" for="date-end">End Date</label>
+          <label
+            class="form-label"
+            for="date-end">
+            End Date
+          </label>
           <input
             id="date-end"
             v-model="form.date_end"
             type="text"
             class="form-input"
-            placeholder="Optional"
-          />
+            placeholder="Optional" />
         </div>
         <div class="form-group">
-          <label class="form-label" for="date-precision">Precision</label>
-          <select id="date-precision" v-model="form.date_precision" class="form-input">
+          <label
+            class="form-label"
+            for="date-precision">
+            Precision
+          </label>
+          <select
+            id="date-precision"
+            v-model="form.date_precision"
+            class="form-input">
             <option value="">Select...</option>
-            <option v-for="p in precisionTypes" :key="p" :value="p">{{ p }}</option>
+            <option
+              v-for="p in precisionTypes"
+              :key="p"
+              :value="p">
+              {{ p }}
+            </option>
           </select>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label" for="date-display">Display Date</label>
+          <label
+            class="form-label"
+            for="date-display">
+            Display Date
+          </label>
           <input
             id="date-display"
             v-model="form.date_display"
             type="text"
             class="form-input"
-            placeholder="e.g., c. 500 BCE"
-          />
+            placeholder="e.g., c. 500 BCE" />
         </div>
         <div class="form-group form-checkbox">
-          <input id="is-bce" v-model="form.is_bce" type="checkbox" />
+          <input
+            id="is-bce"
+            v-model="form.is_bce"
+            type="checkbox" />
           <label for="is-bce">BCE (Before Common Era)</label>
         </div>
       </div>
@@ -453,9 +484,17 @@ onMounted(() => {
         <label class="form-label">Tags</label>
         <div class="tags-input-wrapper">
           <div class="selected-tags">
-            <span v-for="tag in form.tags" :key="tag" class="tag tag-purple">
+            <span
+              v-for="tag in form.tags"
+              :key="tag"
+              class="tag tag-purple">
               {{ tag }}
-              <button type="button" class="tag-remove" @click="removeTag(tag)">&times;</button>
+              <button
+                type="button"
+                class="tag-remove"
+                @click="removeTag(tag)">
+                &times;
+              </button>
             </span>
           </div>
           <div class="tag-autocomplete">
@@ -464,16 +503,16 @@ onMounted(() => {
               type="text"
               class="form-input"
               placeholder="Add tag..."
-              @keydown.enter.prevent="addTag"
-            />
-            <div v-if="filteredTags.length > 0" class="tag-suggestions">
+              @keydown.enter.prevent="addTag" />
+            <div
+              v-if="filteredTags.length > 0"
+              class="tag-suggestions">
               <button
                 v-for="tag in filteredTags"
                 :key="tag.id"
                 type="button"
                 class="tag-suggestion"
-                @click="selectSuggestedTag(tag)"
-              >
+                @click="selectSuggestedTag(tag)">
                 {{ tag.name }}
               </button>
             </div>
@@ -484,25 +523,29 @@ onMounted(() => {
       <div class="form-group">
         <label class="form-label">Relationships</label>
 
-        <div v-if="existingRelationships.length > 0" class="relationships-list">
+        <div
+          v-if="existingRelationships.length > 0"
+          class="relationships-list">
           <div
             v-for="rel in existingRelationships"
             :key="rel.id"
             class="relationship-item"
-            :class="{ 'marked-for-deletion': relationshipsToDelete.includes(rel.id) }"
-          >
+            :class="{ 'marked-for-deletion': relationshipsToDelete.includes(rel.id) }">
             <div class="relationship-info">
               <span class="relationship-type">{{ formatRelationType(rel.type) }}</span>
               <span class="relationship-target">{{ rel.event.title }}</span>
-              <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
+              <span
+                v-if="rel.notes"
+                class="relationship-notes">
+                {{ rel.notes }}
+              </span>
             </div>
             <button
               v-if="!relationshipsToDelete.includes(rel.id)"
               type="button"
               class="relationship-remove"
               title="Remove relationship"
-              @click="markRelationshipForDeletion(rel.id)"
-            >
+              @click="markRelationshipForDeletion(rel.id)">
               &times;
             </button>
             <button
@@ -510,62 +553,75 @@ onMounted(() => {
               type="button"
               class="relationship-restore"
               title="Restore relationship"
-              @click="restoreRelationship(rel.id)"
-            >
+              @click="restoreRelationship(rel.id)">
               ↩
             </button>
           </div>
         </div>
 
-        <div v-if="pendingRelationships.length > 0" class="relationships-list pending-list">
+        <div
+          v-if="pendingRelationships.length > 0"
+          class="relationships-list pending-list">
           <div
             v-for="(rel, index) in pendingRelationships"
             :key="index"
-            class="relationship-item pending"
-          >
+            class="relationship-item pending">
             <div class="relationship-info">
               <span class="relationship-type">{{ formatRelationType(rel.type) }}</span>
               <span class="relationship-target">{{ rel.target_id }}</span>
-              <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
+              <span
+                v-if="rel.notes"
+                class="relationship-notes">
+                {{ rel.notes }}
+              </span>
               <span class="pending-badge">new</span>
             </div>
             <button
               type="button"
               class="relationship-remove"
               title="Remove"
-              @click="removePendingRelationship(index)"
-            >
+              @click="removePendingRelationship(index)">
               &times;
             </button>
           </div>
         </div>
 
-        <div v-if="showRelationshipPicker && form.id" class="picker-wrapper">
+        <div
+          v-if="showRelationshipPicker && form.id"
+          class="picker-wrapper">
           <RelationshipPicker
             :source-event-id="form.id"
             :existing-target-ids="existingTargetIds"
             @add="addPendingRelationship"
-            @cancel="showRelationshipPicker = false"
-          />
+            @cancel="showRelationshipPicker = false" />
         </div>
 
         <button
           v-if="!showRelationshipPicker && form.id"
           type="button"
           class="btn btn-ghost btn-sm add-relationship-btn"
-          @click="showRelationshipPicker = true"
-        >
+          @click="showRelationshipPicker = true">
           + Add Relationship
         </button>
 
-        <p v-if="!form.id" class="relationship-hint">
+        <p
+          v-if="!form.id"
+          class="relationship-hint">
           Enter an event ID first to add relationships
         </p>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn btn-ghost" @click="emit('close')">Cancel</button>
-        <button type="submit" class="btn btn-primary" :disabled="saving">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          @click="emit('close')">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          :disabled="saving">
           {{ saving ? 'Saving...' : isEditing ? 'Update Event' : 'Create Event' }}
         </button>
       </div>

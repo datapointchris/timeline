@@ -1,5 +1,5 @@
-import { db, initializeDatabase } from '../db/index.js';
-import { beforeEach } from 'vitest';
+import { db, initializeDatabase } from '../db/index.js'
+import { beforeEach } from 'vitest'
 
 export function resetDatabase() {
   db.exec(`
@@ -8,10 +8,10 @@ export function resetDatabase() {
     DELETE FROM relationships;
     DELETE FROM tags;
     DELETE FROM events;
-  `);
+  `)
 }
 
 beforeEach(() => {
-  initializeDatabase();
-  resetDatabase();
-});
+  initializeDatabase()
+  resetDatabase()
+})

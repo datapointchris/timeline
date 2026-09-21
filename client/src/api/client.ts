@@ -6,9 +6,9 @@ import type {
   Tag,
   Relationship,
   CreateRelationshipInput,
-} from 'shared/types';
+} from 'shared/types'
 
-const API_BASE = '/api';
+const API_BASE = '/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -17,28 +17,28 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       ...options?.headers,
     },
     ...options,
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(error.error || `HTTP ${response.status}`);
+    const error = await response.json().catch(() => ({ error: response.statusText }))
+    throw new Error(error.error || `HTTP ${response.status}`)
   }
 
   if (response.status === 204) {
-    return undefined as T;
+    return undefined as T
   }
 
-  return response.json();
+  return response.json()
 }
 
 export const api = {
   events: {
     list: (params?: { type?: string; tag?: string }) => {
-      const searchParams = new URLSearchParams();
-      if (params?.type) searchParams.set('type', params.type);
-      if (params?.tag) searchParams.set('tag', params.tag);
-      const query = searchParams.toString();
-      return request<TimelineEvent[]>(`/events${query ? `?${query}` : ''}`);
+      const searchParams = new URLSearchParams()
+      if (params?.type) searchParams.set('type', params.type)
+      if (params?.tag) searchParams.set('tag', params.tag)
+      const query = searchParams.toString()
+      return request<TimelineEvent[]>(`/events${query ? `?${query}` : ''}`)
     },
 
     get: (id: string) => request<EventWithRelations>(`/events/${id}`),
@@ -60,8 +60,7 @@ export const api = {
         method: 'DELETE',
       }),
 
-    search: (query: string) =>
-      request<TimelineEvent[]>(`/events/search?q=${encodeURIComponent(query)}`),
+    search: (query: string) => request<TimelineEvent[]>(`/events/search?q=${encodeURIComponent(query)}`),
   },
 
   tags: {
@@ -91,4 +90,4 @@ export const api = {
         method: 'DELETE',
       }),
   },
-};
+}

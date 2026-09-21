@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
-import { api } from '../api/client';
-import type { TimelineEvent, RelationshipType, CreateRelationshipInput } from 'shared/types';
+import { ref, watch, computed } from 'vue'
+import { api } from '../api/client'
+import type { TimelineEvent, RelationshipType, CreateRelationshipInput } from 'shared/types'
 
 const props = defineProps<{
-  sourceEventId: string;
-  existingTargetIds: string[];
-}>();
+  sourceEventId: string
+  existingTargetIds: string[]
+}>()
 
 const emit = defineEmits<{
-  add: [relationship: CreateRelationshipInput];
-  cancel: [];
-}>();
+  add: [relationship: CreateRelationshipInput]
+  cancel: []
+}>()
 
-const searchQuery = ref('');
-const searchResults = ref<TimelineEvent[]>([]);
-const selectedEvent = ref<TimelineEvent | null>(null);
-const selectedType = ref<RelationshipType>('related');
-const notes = ref('');
-const searching = ref(false);
-const error = ref<string | null>(null);
+const searchQuery = ref('')
+const searchResults = ref<TimelineEvent[]>([])
+const selectedEvent = ref<TimelineEvent | null>(null)
+const selectedType = ref<RelationshipType>('related')
+const notes = ref('')
+const searching = ref(false)
+const error = ref<string | null>(null)
 
 const relationshipTypes: { value: RelationshipType; label: string; description: string }[] = [
   {
@@ -45,50 +45,48 @@ const relationshipTypes: { value: RelationshipType; label: string; description: 
     label: 'Response to',
     description: 'This event was created in reaction to the target',
   },
-];
+]
 
 const filteredResults = computed(() => {
-  return searchResults.value.filter(
-    e => e.id !== props.sourceEventId && !props.existingTargetIds.includes(e.id)
-  );
-});
+  return searchResults.value.filter((e) => e.id !== props.sourceEventId && !props.existingTargetIds.includes(e.id))
+})
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
-watch(searchQuery, query => {
-  if (searchTimeout) clearTimeout(searchTimeout);
+watch(searchQuery, (query) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
 
   if (!query.trim()) {
-    searchResults.value = [];
-    return;
+    searchResults.value = []
+    return
   }
 
   searchTimeout = setTimeout(async () => {
-    searching.value = true;
+    searching.value = true
     try {
-      searchResults.value = await api.events.search(query);
+      searchResults.value = await api.events.search(query)
     } catch {
-      searchResults.value = [];
+      searchResults.value = []
     } finally {
-      searching.value = false;
+      searching.value = false
     }
-  }, 300);
-});
+  }, 300)
+})
 
 function selectEvent(event: TimelineEvent) {
-  selectedEvent.value = event;
-  searchQuery.value = '';
-  searchResults.value = [];
+  selectedEvent.value = event
+  searchQuery.value = ''
+  searchResults.value = []
 }
 
 function clearSelection() {
-  selectedEvent.value = null;
+  selectedEvent.value = null
 }
 
 function handleAdd() {
   if (!selectedEvent.value) {
-    error.value = 'Please select an event';
-    return;
+    error.value = 'Please select an event'
+    return
   }
 
   emit('add', {
@@ -96,12 +94,12 @@ function handleAdd() {
     target_id: selectedEvent.value.id,
     type: selectedType.value,
     notes: notes.value.trim() || undefined,
-  });
+  })
 
-  selectedEvent.value = null;
-  selectedType.value = 'related';
-  notes.value = '';
-  error.value = null;
+  selectedEvent.value = null
+  selectedType.value = 'related'
+  notes.value = ''
+  error.value = null
 }
 </script>
 
@@ -109,82 +107,127 @@ function handleAdd() {
   <div class="relationship-picker">
     <h4 class="picker-title">Add Relationship</h4>
 
-    <div v-if="error" class="error-box error-small">{{ error }}</div>
+    <div
+      v-if="error"
+      class="error-box error-small">
+      {{ error }}
+    </div>
 
-    <div v-if="!selectedEvent" class="search-section">
+    <div
+      v-if="!selectedEvent"
+      class="search-section">
       <label class="form-label">Search for event</label>
       <div class="search-wrapper">
         <input
           v-model="searchQuery"
           type="text"
           class="form-input"
-          placeholder="Type to search events..."
-        />
-        <div v-if="searching" class="search-spinner"></div>
+          placeholder="Type to search events..." />
+        <div
+          v-if="searching"
+          class="search-spinner"></div>
       </div>
 
-      <div v-if="filteredResults.length > 0" class="search-results">
+      <div
+        v-if="filteredResults.length > 0"
+        class="search-results">
         <button
           v-for="event in filteredResults"
           :key="event.id"
           type="button"
           class="search-result"
-          @click="selectEvent(event)"
-        >
+          @click="selectEvent(event)">
           <span class="result-title">{{ event.title }}</span>
-          <span v-if="event.type" class="result-type">{{ event.type }}</span>
+          <span
+            v-if="event.type"
+            class="result-type">
+            {{ event.type }}
+          </span>
         </button>
       </div>
 
-      <p v-else-if="searchQuery && !searching && searchResults.length === 0" class="no-results">
+      <p
+        v-else-if="searchQuery && !searching && searchResults.length === 0"
+        class="no-results">
         No events found
       </p>
     </div>
 
-    <div v-else class="selected-section">
+    <div
+      v-else
+      class="selected-section">
       <label class="form-label">Selected event</label>
       <div class="selected-event">
         <div class="selected-info">
           <span class="selected-title">{{ selectedEvent.title }}</span>
-          <span v-if="selectedEvent.type" class="tag" :class="`tag-${selectedEvent.type}`">
+          <span
+            v-if="selectedEvent.type"
+            class="tag"
+            :class="`tag-${selectedEvent.type}`">
             {{ selectedEvent.type }}
           </span>
         </div>
-        <button type="button" class="clear-btn" @click="clearSelection">&times;</button>
+        <button
+          type="button"
+          class="clear-btn"
+          @click="clearSelection">
+          &times;
+        </button>
       </div>
     </div>
 
-    <div v-if="selectedEvent" class="type-section">
-      <label class="form-label" for="rel-type">Relationship type</label>
-      <select id="rel-type" v-model="selectedType" class="form-input">
-        <option v-for="rt in relationshipTypes" :key="rt.value" :value="rt.value">
+    <div
+      v-if="selectedEvent"
+      class="type-section">
+      <label
+        class="form-label"
+        for="rel-type">
+        Relationship type
+      </label>
+      <select
+        id="rel-type"
+        v-model="selectedType"
+        class="form-input">
+        <option
+          v-for="rt in relationshipTypes"
+          :key="rt.value"
+          :value="rt.value">
           {{ rt.label }}
         </option>
       </select>
       <p class="type-description">
-        {{ relationshipTypes.find(rt => rt.value === selectedType)?.description }}
+        {{ relationshipTypes.find((rt) => rt.value === selectedType)?.description }}
       </p>
     </div>
 
-    <div v-if="selectedEvent" class="notes-section">
-      <label class="form-label" for="rel-notes">Notes (optional)</label>
+    <div
+      v-if="selectedEvent"
+      class="notes-section">
+      <label
+        class="form-label"
+        for="rel-notes">
+        Notes (optional)
+      </label>
       <textarea
         id="rel-notes"
         v-model="notes"
         class="form-input notes-input"
         placeholder="Add context about this relationship..."
-        rows="2"
-      ></textarea>
+        rows="2"></textarea>
     </div>
 
     <div class="picker-actions">
-      <button type="button" class="btn btn-ghost btn-sm" @click="emit('cancel')">Cancel</button>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        @click="emit('cancel')">
+        Cancel
+      </button>
       <button
         type="button"
         class="btn btn-primary btn-sm"
         :disabled="!selectedEvent"
-        @click="handleAdd"
-      >
+        @click="handleAdd">
         Add Relationship
       </button>
     </div>

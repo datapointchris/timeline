@@ -1,190 +1,234 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
-import type { EventWithRelations, TimelineEvent } from 'shared/types';
-import { RELATIONSHIP_INVERSES } from 'shared/types';
-import { api } from '../api/client';
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import type { EventWithRelations, TimelineEvent } from 'shared/types'
+import { RELATIONSHIP_INVERSES } from 'shared/types'
+import { api } from '../api/client'
 
 const props = defineProps<{
-  eventId: string;
-}>();
+  eventId: string
+}>()
 
 const emit = defineEmits<{
-  close: [];
-  navigate: [eventId: string];
-}>();
+  close: []
+  navigate: [eventId: string]
+}>()
 
-const event = ref<EventWithRelations | null>(null);
-const loading = ref(false);
-const error = ref<string | null>(null);
-const animationState = ref<'entering' | 'visible' | 'leaving'>('entering');
+const event = ref<EventWithRelations | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
+const animationState = ref<'entering' | 'visible' | 'leaving'>('entering')
 
 function closeWithAnimation() {
-  animationState.value = 'leaving';
+  animationState.value = 'leaving'
   setTimeout(() => {
-    emit('close');
-  }, 200);
+    emit('close')
+  }, 200)
 }
 
 async function fetchEvent(id: string) {
-  loading.value = true;
-  error.value = null;
+  loading.value = true
+  error.value = null
   try {
-    event.value = await api.events.get(id);
+    event.value = await api.events.get(id)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to fetch event';
-    event.value = null;
+    error.value = e instanceof Error ? e.message : 'Failed to fetch event'
+    event.value = null
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 watch(
   () => props.eventId,
-  id => {
-    if (id) fetchEvent(id);
+  (id) => {
+    if (id) fetchEvent(id)
   },
-  { immediate: true }
-);
+  { immediate: true },
+)
 
 function formatDate(): string {
-  if (!event.value) return '';
-  const ev = event.value;
-  if (ev.date_display) return ev.date_display;
-  if (!ev.date_start) return '';
+  if (!event.value) return ''
+  const ev = event.value
+  if (ev.date_display) return ev.date_display
+  if (!ev.date_start) return ''
 
-  const prefix = ev.is_bce ? 'BCE ' : '';
+  const prefix = ev.is_bce ? 'BCE ' : ''
   if (ev.date_end && ev.date_end !== ev.date_start) {
-    return `${prefix}${ev.date_start} – ${ev.date_end}`;
+    return `${prefix}${ev.date_start} – ${ev.date_end}`
   }
-  return `${prefix}${ev.date_start}`;
+  return `${prefix}${ev.date_start}`
 }
 
 function formatRelationType(type: string, inverse: boolean): string {
   if (inverse) {
-    return RELATIONSHIP_INVERSES[type as keyof typeof RELATIONSHIP_INVERSES] || type;
+    return RELATIONSHIP_INVERSES[type as keyof typeof RELATIONSHIP_INVERSES] || type
   }
-  return type.replace(/_/g, ' ');
+  return type.replace(/_/g, ' ')
 }
 
 function navigateToEvent(ev: TimelineEvent) {
-  emit('navigate', ev.id);
+  emit('navigate', ev.id)
 }
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    closeWithAnimation();
+    closeWithAnimation()
   }
 }
 
 function handleBackdropClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
-    closeWithAnimation();
+    closeWithAnimation()
   }
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown);
-  document.body.style.overflow = 'hidden';
+  window.addEventListener('keydown', handleKeydown)
+  document.body.style.overflow = 'hidden'
   setTimeout(() => {
-    animationState.value = 'visible';
-  }, 250);
-});
+    animationState.value = 'visible'
+  }, 250)
+})
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-  document.body.style.overflow = '';
-});
+  window.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflow = ''
+})
 </script>
 
 <template>
   <Teleport to="body">
-    <div class="slide-over-backdrop" :class="animationState" @click="handleBackdropClick">
+    <div
+      class="slide-over-backdrop"
+      :class="animationState"
+      @click="handleBackdropClick">
       <div class="slide-over-panel">
         <div class="panel-header">
-          <h2 v-if="event" class="panel-title">{{ event.title }}</h2>
-          <span v-else class="panel-title">Loading...</span>
-          <button class="close-btn" title="Close (Esc)" @click="closeWithAnimation">
+          <h2
+            v-if="event"
+            class="panel-title">
+            {{ event.title }}
+          </h2>
+          <span
+            v-else
+            class="panel-title">
+            Loading...
+          </span>
+          <button
+            class="close-btn"
+            title="Close (Esc)"
+            @click="closeWithAnimation">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
               height="24"
               viewBox="0 0 20 20"
-              fill="currentColor"
-            >
+              fill="currentColor">
               <path
                 fill-rule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"
-              />
+                clip-rule="evenodd" />
             </svg>
           </button>
         </div>
 
         <div class="panel-body">
-          <div v-if="loading" class="loading-state">
+          <div
+            v-if="loading"
+            class="loading-state">
             <div class="spinner"></div>
           </div>
 
-          <div v-else-if="error" class="error-state">
+          <div
+            v-else-if="error"
+            class="error-state">
             <p>{{ error }}</p>
           </div>
 
-          <article v-else-if="event" class="event-article">
+          <article
+            v-else-if="event"
+            class="event-article">
             <div class="event-meta">
-              <span v-if="event.type" class="tag" :class="`tag-${event.type}`">
+              <span
+                v-if="event.type"
+                class="tag"
+                :class="`tag-${event.type}`">
                 {{ event.type }}
               </span>
-              <span v-if="formatDate()" class="tag tag-other">
+              <span
+                v-if="formatDate()"
+                class="tag tag-other">
                 {{ formatDate() }}
               </span>
             </div>
 
-            <div v-if="event.tags.length > 0" class="tags-list">
-              <span v-for="tag in event.tags" :key="tag.id" class="tag tag-purple">
+            <div
+              v-if="event.tags.length > 0"
+              class="tags-list">
+              <span
+                v-for="tag in event.tags"
+                :key="tag.id"
+                class="tag tag-purple">
                 {{ tag.name }}
               </span>
             </div>
 
-            <section v-if="event.summary" class="event-summary">
+            <section
+              v-if="event.summary"
+              class="event-summary">
               <p>{{ event.summary }}</p>
             </section>
 
-            <section v-if="event.details" class="event-details">
-              <div class="rich-content" v-html="event.details"></div>
+            <section
+              v-if="event.details"
+              class="event-details">
+              <div
+                class="rich-content"
+                v-html="event.details"></div>
             </section>
 
-            <section v-if="event.relationships.length > 0" class="relationships-section">
+            <section
+              v-if="event.relationships.length > 0"
+              class="relationships-section">
               <h3 class="section-title">Relationships</h3>
               <div class="relationships-list">
                 <button
                   v-for="rel in event.relationships"
                   :key="rel.id"
                   class="relationship-item"
-                  @click="navigateToEvent(rel.event)"
-                >
+                  @click="navigateToEvent(rel.event)">
                   <div class="relationship-main">
                     <span class="relationship-type">{{ formatRelationType(rel.type, false) }}</span>
                     <span class="relationship-target">{{ rel.event.title }}</span>
                   </div>
-                  <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
+                  <span
+                    v-if="rel.notes"
+                    class="relationship-notes">
+                    {{ rel.notes }}
+                  </span>
                 </button>
               </div>
             </section>
 
-            <section v-if="event.inverse_relationships.length > 0" class="relationships-section">
+            <section
+              v-if="event.inverse_relationships.length > 0"
+              class="relationships-section">
               <h3 class="section-title">Referenced By</h3>
               <div class="relationships-list">
                 <button
                   v-for="rel in event.inverse_relationships"
                   :key="rel.id"
                   class="relationship-item"
-                  @click="navigateToEvent(rel.event)"
-                >
+                  @click="navigateToEvent(rel.event)">
                   <div class="relationship-main">
                     <span class="relationship-type">{{ formatRelationType(rel.type, true) }}</span>
                     <span class="relationship-target">{{ rel.event.title }}</span>
                   </div>
-                  <span v-if="rel.notes" class="relationship-notes">{{ rel.notes }}</span>
+                  <span
+                    v-if="rel.notes"
+                    class="relationship-notes">
+                    {{ rel.notes }}
+                  </span>
                 </button>
               </div>
             </section>

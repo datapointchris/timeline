@@ -1,6 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
-import EventDetailPage from '../views/EventDetailPage.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import EventDetailPage from '../views/EventDetailPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,6 +17,6 @@ const router = createRouter({
       props: true,
     },
   ],
-});
+})
 
-export default router;
+export default router

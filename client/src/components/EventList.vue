@@ -1,51 +1,63 @@
 <script setup lang="ts">
-import type { TimelineEvent } from 'shared/types';
+import type { TimelineEvent } from 'shared/types'
 
 defineProps<{
-  events: readonly TimelineEvent[];
-}>();
+  events: readonly TimelineEvent[]
+}>()
 
 const emit = defineEmits<{
-  select: [event: TimelineEvent];
-}>();
+  select: [event: TimelineEvent]
+}>()
 
 function formatDate(event: TimelineEvent): string {
-  if (event.date_display) return event.date_display;
-  if (!event.date_start) return '';
+  if (event.date_display) return event.date_display
+  if (!event.date_start) return ''
 
-  const prefix = event.is_bce ? 'BCE ' : '';
+  const prefix = event.is_bce ? 'BCE ' : ''
   if (event.date_end && event.date_end !== event.date_start) {
-    return `${prefix}${event.date_start} – ${event.date_end}`;
+    return `${prefix}${event.date_start} – ${event.date_end}`
   }
-  return `${prefix}${event.date_start}`;
+  return `${prefix}${event.date_start}`
 }
 </script>
 
 <template>
   <div class="event-list">
-    <div v-if="events.length === 0" class="empty">
+    <div
+      v-if="events.length === 0"
+      class="empty">
       No events found. Try adjusting your filters or create a new event.
     </div>
 
-    <div v-else class="grid-events">
+    <div
+      v-else
+      class="grid-events">
       <button
         v-for="event in events"
         :key="event.id"
         class="event-card card"
-        @click="emit('select', event)"
-      >
+        @click="emit('select', event)">
         <div class="event-header">
           <h3 class="event-title line-clamp-2">{{ event.title }}</h3>
-          <span v-if="event.type" class="tag" :class="`tag-${event.type}`">
+          <span
+            v-if="event.type"
+            class="tag"
+            :class="`tag-${event.type}`">
             {{ event.type }}
           </span>
         </div>
 
-        <p v-if="formatDate(event)" class="event-date">
+        <p
+          v-if="formatDate(event)"
+          class="event-date">
           {{ formatDate(event) }}
         </p>
 
-        <p v-if="event.summary" class="event-content line-clamp-3">{{ event.summary }}</p>
+        <p
+          v-if="event.summary"
+          class="event-content line-clamp-3">
+          {{ event.summary }}
+        </p>
       </button>
     </div>
   </div>

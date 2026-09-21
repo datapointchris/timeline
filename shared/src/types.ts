@@ -1,78 +1,63 @@
-export type DatePrecision = 'exact' | 'year' | 'decade' | 'century' | 'approximate' | 'uncertain';
+export type DatePrecision = 'exact' | 'year' | 'decade' | 'century' | 'approximate' | 'uncertain'
 
-export type EventType =
-  | 'book'
-  | 'person'
-  | 'event'
-  | 'movement'
-  | 'idea'
-  | 'artwork'
-  | 'invention'
-  | 'other';
+export type EventType = 'book' | 'person' | 'event' | 'movement' | 'idea' | 'artwork' | 'invention' | 'other'
 
-export type RelationshipType =
-  | 'influenced_by'
-  | 'caused'
-  | 'contemporary_with'
-  | 'preceded'
-  | 'part_of'
-  | 'related'
-  | 'response_to';
+export type RelationshipType = 'influenced_by' | 'caused' | 'contemporary_with' | 'preceded' | 'part_of' | 'related' | 'response_to'
 
-export type MediaType = 'image' | 'link' | 'video_url';
+export type MediaType = 'image' | 'link' | 'video_url'
 
 export interface TimelineEvent {
-  id: string;
-  title: string;
-  summary: string | null;
-  details: string | null;
-  date_start: string | null;
-  date_end: string | null;
-  date_precision: DatePrecision | null;
-  date_display: string | null;
-  is_bce: boolean;
-  type: EventType | null;
-  created_at: string;
-  updated_at: string;
+  id: string
+  title: string
+  summary: string | null
+  details: string | null
+  date_start: string | null
+  date_end: string | null
+  date_precision: DatePrecision | null
+  date_display: string | null
+  is_bce: boolean
+  type: EventType | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Tag {
-  id: number;
-  name: string;
+  id: number
+  name: string
 }
 
 export interface EventTag {
-  event_id: string;
-  tag_id: number;
+  event_id: string
+  tag_id: number
 }
 
 export interface Relationship {
-  id: number;
-  source_id: string;
-  target_id: string;
-  type: RelationshipType;
-  notes: string | null;
-  created_at: string;
+  id: number
+  source_id: string
+  target_id: string
+  type: RelationshipType
+  notes: string | null
+  created_at: string
 }
 
 export interface Media {
-  id: number;
-  event_id: string;
-  type: MediaType;
-  url: string;
-  caption: string | null;
-  created_at: string;
+  id: number
+  event_id: string
+  type: MediaType
+  url: string
+  caption: string | null
+  created_at: string
 }
 
 export interface EventWithRelations extends TimelineEvent {
-  tags: Tag[];
-  media: Media[];
-  relationships: RelationshipWithEvent[];
-  inverse_relationships: RelationshipWithEvent[];
+  tags: Tag[]
+  media: Media[]
+  relationships: RelationshipWithEvent[]
+  inverse_relationships: RelationshipWithEvent[]
 }
 
 export interface RelationshipWithEvent extends Relationship {
-  event: TimelineEvent;
+  event: TimelineEvent
 }
 
 export const RELATIONSHIP_INVERSES: Record<RelationshipType, string> = {
@@ -83,44 +68,44 @@ export const RELATIONSHIP_INVERSES: Record<RelationshipType, string> = {
   part_of: 'contains',
   related: 'related',
   response_to: 'prompted',
-};
+}
 
 export interface CreateEventInput {
-  id: string;
-  title: string;
-  summary?: string;
-  details?: string;
-  date_start?: string;
-  date_end?: string;
-  date_precision?: DatePrecision;
-  date_display?: string;
-  is_bce?: boolean;
-  type?: EventType;
-  tags?: string[];
+  id: string
+  title: string
+  summary?: string
+  details?: string
+  date_start?: string
+  date_end?: string
+  date_precision?: DatePrecision
+  date_display?: string
+  is_bce?: boolean
+  type?: EventType
+  tags?: string[]
 }
 
 export interface UpdateEventInput {
-  title?: string;
-  summary?: string;
-  details?: string;
-  date_start?: string;
-  date_end?: string;
-  date_precision?: DatePrecision;
-  date_display?: string;
-  is_bce?: boolean;
-  type?: EventType;
+  title?: string
+  summary?: string
+  details?: string
+  date_start?: string
+  date_end?: string
+  date_precision?: DatePrecision
+  date_display?: string
+  is_bce?: boolean
+  type?: EventType
 }
 
 export interface CreateRelationshipInput {
-  source_id: string;
-  target_id: string;
-  type: RelationshipType;
-  notes?: string;
+  source_id: string
+  target_id: string
+  type: RelationshipType
+  notes?: string
 }
 
 export interface CreateMediaInput {
-  event_id: string;
-  type: MediaType;
-  url: string;
-  caption?: string;
+  event_id: string
+  type: MediaType
+  url: string
+  caption?: string
 }

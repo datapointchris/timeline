@@ -1,4 +1,4 @@
-import { db } from '../db/index.js';
+import { db } from '../db/index.js'
 import type {
   TimelineEvent,
   Tag,
@@ -8,7 +8,7 @@ import type {
   RelationshipWithEvent,
   CreateEventInput,
   UpdateEventInput,
-} from 'shared';
+} from 'shared'
 
 const INVERSES: Record<string, string> = {
   influenced_by: 'influenced',
@@ -18,35 +18,30 @@ const INVERSES: Record<string, string> = {
   part_of: 'contains',
   related: 'related',
   response_to: 'prompted',
-};
+}
 
-export function getAllEvents(filters?: {
-  tag?: string;
-  type?: string;
-  after?: string;
-  before?: string;
-}): TimelineEvent[] {
-  let query = 'SELECT * FROM events WHERE 1=1';
-  const params: Record<string, string> = {};
+export function getAllEvents(filters?: { tag?: string; type?: string; after?: string; before?: string }): TimelineEvent[] {
+  let query = 'SELECT * FROM events WHERE 1=1'
+  const params: Record<string, string> = {}
 
   if (filters?.type) {
-    query += ' AND type = :type';
-    params.type = filters.type;
+    query += ' AND type = :type'
+    params.type = filters.type
   }
 
   if (filters?.after) {
-    query += ' AND date_start >= :after';
-    params.after = filters.after;
+    query += ' AND date_start >= :after'
+    params.after = filters.after
   }
 
   if (filters?.before) {
-    query += ' AND date_start <= :before';
-    params.before = filters.before;
+    query += ' AND date_start <= :before'
+    params.before = filters.before
   }
 
-  query += ' ORDER BY date_start ASC, is_bce DESC';
+  query += ' ORDER BY date_start ASC, is_bce DESC'
 
-  let events = db.prepare(query).all(params) as TimelineEvent[];
+  let events = db.prepare(query).all(params) as TimelineEvent[]
 
   if (filters?.tag) {
     const tagFilter = db.prepare(`
@@ -54,21 +49,19 @@ export function getAllEvents(filters?: {
       JOIN event_tags et ON e.id = et.event_id
       JOIN tags t ON et.tag_id = t.id
       WHERE t.name = ?
-    `);
-    const taggedEvents = tagFilter.all(filters.tag) as TimelineEvent[];
-    const taggedIds = new Set(taggedEvents.map(e => e.id));
-    events = events.filter(e => taggedIds.has(e.id));
+    `)
+    const taggedEvents = tagFilter.all(filters.tag) as TimelineEvent[]
+    const taggedIds = new Set(taggedEvents.map((e) => e.id))
+    events = events.filter((e) => taggedIds.has(e.id))
   }
 
-  return events.map(e => ({ ...e, is_bce: Boolean(e.is_bce) }));
+  return events.map((e) => ({ ...e, is_bce: Boolean(e.is_bce) }))
 }
 
 export function getEventById(id: string): EventWithRelations | null {
-  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as
-    | TimelineEvent
-    | undefined;
+  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as TimelineEvent | undefined
 
-  if (!event) return null;
+  if (!event) return null
 
   const tags = db
     .prepare(
@@ -76,11 +69,11 @@ export function getEventById(id: string): EventWithRelations | null {
     SELECT t.* FROM tags t
     JOIN event_tags et ON t.id = et.tag_id
     WHERE et.event_id = ?
-  `
+  `,
     )
-    .all(id) as Tag[];
+    .all(id) as Tag[]
 
-  const media = db.prepare('SELECT * FROM media WHERE event_id = ?').all(id) as Media[];
+  const media = db.prepare('SELECT * FROM media WHERE event_id = ?').all(id) as Media[]
 
   const outgoingRels = db
     .prepare(
@@ -89,18 +82,18 @@ export function getEventById(id: string): EventWithRelations | null {
     FROM relationships r
     JOIN events e ON r.target_id = e.id
     WHERE r.source_id = ?
-  `
+  `,
     )
     .all(id) as Array<
     Relationship & {
-      event_id: string;
-      title: string;
-      date_start: string;
-      date_end: string;
-      is_bce: number;
-      event_type: string;
+      event_id: string
+      title: string
+      date_start: string
+      date_end: string
+      is_bce: number
+      event_type: string
     }
-  >;
+  >
 
   const incomingRels = db
     .prepare(
@@ -109,20 +102,20 @@ export function getEventById(id: string): EventWithRelations | null {
     FROM relationships r
     JOIN events e ON r.source_id = e.id
     WHERE r.target_id = ?
-  `
+  `,
     )
     .all(id) as Array<
     Relationship & {
-      event_id: string;
-      title: string;
-      date_start: string;
-      date_end: string;
-      is_bce: number;
-      event_type: string;
+      event_id: string
+      title: string
+      date_start: string
+      date_end: string
+      is_bce: number
+      event_type: string
     }
-  >;
+  >
 
-  const relationships: RelationshipWithEvent[] = outgoingRels.map(r => ({
+  const relationships: RelationshipWithEvent[] = outgoingRels.map((r) => ({
     id: r.id,
     source_id: r.source_id,
     target_id: r.target_id,
@@ -143,9 +136,9 @@ export function getEventById(id: string): EventWithRelations | null {
       created_at: '',
       updated_at: '',
     },
-  }));
+  }))
 
-  const inverse_relationships: RelationshipWithEvent[] = incomingRels.map(r => ({
+  const inverse_relationships: RelationshipWithEvent[] = incomingRels.map((r) => ({
     id: r.id,
     source_id: r.source_id,
     target_id: r.target_id,
@@ -166,7 +159,7 @@ export function getEventById(id: string): EventWithRelations | null {
       created_at: '',
       updated_at: '',
     },
-  }));
+  }))
 
   return {
     ...event,
@@ -175,16 +168,16 @@ export function getEventById(id: string): EventWithRelations | null {
     media,
     relationships,
     inverse_relationships,
-  };
+  }
 }
 
 export function createEvent(input: CreateEventInput): TimelineEvent {
-  const now = new Date().toISOString();
+  const now = new Date().toISOString()
 
   const stmt = db.prepare(`
     INSERT INTO events (id, title, summary, details, date_start, date_end, date_precision, date_display, is_bce, type, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  `)
 
   stmt.run(
     input.id,
@@ -198,99 +191,97 @@ export function createEvent(input: CreateEventInput): TimelineEvent {
     input.is_bce ? 1 : 0,
     input.type || null,
     now,
-    now
-  );
+    now,
+  )
 
   if (input.tags && input.tags.length > 0) {
     for (const tagName of input.tags) {
-      const existingTag = db.prepare('SELECT id FROM tags WHERE name = ?').get(tagName) as
-        | { id: number }
-        | undefined;
-      let tagId: number;
+      const existingTag = db.prepare('SELECT id FROM tags WHERE name = ?').get(tagName) as { id: number } | undefined
+      let tagId: number
 
       if (existingTag) {
-        tagId = existingTag.id;
+        tagId = existingTag.id
       } else {
-        const result = db.prepare('INSERT INTO tags (name) VALUES (?)').run(tagName);
-        tagId = Number(result.lastInsertRowid);
+        const result = db.prepare('INSERT INTO tags (name) VALUES (?)').run(tagName)
+        tagId = Number(result.lastInsertRowid)
       }
 
-      db.prepare('INSERT INTO event_tags (event_id, tag_id) VALUES (?, ?)').run(input.id, tagId);
+      db.prepare('INSERT INTO event_tags (event_id, tag_id) VALUES (?, ?)').run(input.id, tagId)
     }
   }
 
-  return db.prepare('SELECT * FROM events WHERE id = ?').get(input.id) as TimelineEvent;
+  return db.prepare('SELECT * FROM events WHERE id = ?').get(input.id) as TimelineEvent
 }
 
 export function updateEvent(id: string, input: UpdateEventInput): TimelineEvent | null {
-  const existing = db.prepare('SELECT * FROM events WHERE id = ?').get(id);
-  if (!existing) return null;
+  const existing = db.prepare('SELECT * FROM events WHERE id = ?').get(id)
+  if (!existing) return null
 
-  const now = new Date().toISOString();
-  const fields: string[] = ['updated_at = ?'];
-  const values: (string | number | null)[] = [now];
+  const now = new Date().toISOString()
+  const fields: string[] = ['updated_at = ?']
+  const values: (string | number | null)[] = [now]
 
   if (input.title !== undefined) {
-    fields.push('title = ?');
-    values.push(input.title);
+    fields.push('title = ?')
+    values.push(input.title)
   }
   if (input.summary !== undefined) {
-    fields.push('summary = ?');
-    values.push(input.summary);
+    fields.push('summary = ?')
+    values.push(input.summary)
   }
   if (input.details !== undefined) {
-    fields.push('details = ?');
-    values.push(input.details);
+    fields.push('details = ?')
+    values.push(input.details)
   }
   if (input.date_start !== undefined) {
-    fields.push('date_start = ?');
-    values.push(input.date_start);
+    fields.push('date_start = ?')
+    values.push(input.date_start)
   }
   if (input.date_end !== undefined) {
-    fields.push('date_end = ?');
-    values.push(input.date_end);
+    fields.push('date_end = ?')
+    values.push(input.date_end)
   }
   if (input.date_precision !== undefined) {
-    fields.push('date_precision = ?');
-    values.push(input.date_precision);
+    fields.push('date_precision = ?')
+    values.push(input.date_precision)
   }
   if (input.date_display !== undefined) {
-    fields.push('date_display = ?');
-    values.push(input.date_display);
+    fields.push('date_display = ?')
+    values.push(input.date_display)
   }
   if (input.is_bce !== undefined) {
-    fields.push('is_bce = ?');
-    values.push(input.is_bce ? 1 : 0);
+    fields.push('is_bce = ?')
+    values.push(input.is_bce ? 1 : 0)
   }
   if (input.type !== undefined) {
-    fields.push('type = ?');
-    values.push(input.type);
+    fields.push('type = ?')
+    values.push(input.type)
   }
 
-  values.push(id);
+  values.push(id)
 
-  db.prepare(`UPDATE events SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+  db.prepare(`UPDATE events SET ${fields.join(', ')} WHERE id = ?`).run(...values)
 
-  const updated = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as TimelineEvent;
-  return { ...updated, is_bce: Boolean(updated.is_bce) };
+  const updated = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as TimelineEvent
+  return { ...updated, is_bce: Boolean(updated.is_bce) }
 }
 
 export function deleteEvent(id: string): boolean {
-  const result = db.prepare('DELETE FROM events WHERE id = ?').run(id);
-  return result.changes > 0;
+  const result = db.prepare('DELETE FROM events WHERE id = ?').run(id)
+  return result.changes > 0
 }
 
 export function searchEvents(query: string): TimelineEvent[] {
-  const pattern = `%${query}%`;
+  const pattern = `%${query}%`
   const results = db
     .prepare(
       `
     SELECT * FROM events
     WHERE title LIKE ? OR summary LIKE ? OR details LIKE ?
     ORDER BY date_start ASC, is_bce DESC
-  `
+  `,
     )
-    .all(pattern, pattern, pattern) as TimelineEvent[];
+    .all(pattern, pattern, pattern) as TimelineEvent[]
 
-  return results.map(e => ({ ...e, is_bce: Boolean(e.is_bce) }));
+  return results.map((e) => ({ ...e, is_bce: Boolean(e.is_bce) }))
 }

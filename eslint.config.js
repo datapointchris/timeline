@@ -1,7 +1,7 @@
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import eslintPluginPrettier from 'eslint-plugin-prettier/recommended';
-import eslintPluginVue from 'eslint-plugin-vue';
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import eslintPluginPrettier from 'eslint-plugin-prettier/recommended'
+import eslintPluginVue from 'eslint-plugin-vue'
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -24,12 +24,7 @@ export default tseslint.config(
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        project: [
-          './server/tsconfig.json',
-          './shared/tsconfig.json',
-          './client/tsconfig.app.json',
-          './client/tsconfig.node.json',
-        ],
+        project: ['./server/tsconfig.json', './shared/tsconfig.json', './client/tsconfig.app.json', './client/tsconfig.node.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -73,5 +68,5 @@ export default tseslint.config(
         },
       ],
     },
-  }
-);
+  },
+)

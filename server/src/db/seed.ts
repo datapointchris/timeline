@@ -1,32 +1,31 @@
-import { db, initializeDatabase } from './index.js';
+import { db, initializeDatabase } from './index.js'
 
 interface SeedEvent {
-  id: string;
-  title: string;
-  summary: string;
-  details?: string;
-  date_start: string;
-  date_end?: string;
-  date_precision: string;
-  date_display?: string;
-  is_bce: number;
-  type: string;
-  tags: string[];
+  id: string
+  title: string
+  summary: string
+  details?: string
+  date_start: string
+  date_end?: string
+  date_precision: string
+  date_display?: string
+  is_bce: number
+  type: string
+  tags: string[]
 }
 
 interface SeedRelationship {
-  source_id: string;
-  target_id: string;
-  type: string;
-  notes?: string;
+  source_id: string
+  target_id: string
+  type: string
+  notes?: string
 }
 
 const events: SeedEvent[] = [
   {
     id: 'industrial-revolution',
     title: 'Industrial Revolution',
-    summary:
-      'A period of major industrialization and innovation during the late 18th and early 19th century.',
+    summary: 'A period of major industrialization and innovation during the late 18th and early 19th century.',
     details:
       '<p>The Industrial Revolution fundamentally changed the way goods were manufactured and had profound effects on society, economics, and politics.</p><p>Beginning in Britain, it marked a shift from agrarian economies to industrial manufacturing. Key innovations included the steam engine, spinning jenny, and power loom.</p>',
     date_start: '1760',
@@ -52,8 +51,7 @@ const events: SeedEvent[] = [
   {
     id: 'schopenhauer-world-as-will',
     title: 'The World as Will and Representation',
-    summary:
-      'Arthur Schopenhauer\'s magnum opus arguing the world is driven by a blind, purposeless "Will."',
+    summary: 'Arthur Schopenhauer\'s magnum opus arguing the world is driven by a blind, purposeless "Will."',
     details:
       "<p>Published in 1818, this work presents Schopenhauer's pessimistic philosophy that would later deeply influence Nietzsche, Wagner, and Freud.</p><p>Schopenhauer argues that the underlying reality of the world is irrational will, and that human suffering results from our enslavement to desire.</p>",
     date_start: '1818',
@@ -65,8 +63,7 @@ const events: SeedEvent[] = [
   {
     id: 'communist-manifesto',
     title: 'The Communist Manifesto',
-    summary:
-      'A political pamphlet by Marx and Engels presenting an analytical approach to class struggle.',
+    summary: 'A political pamphlet by Marx and Engels presenting an analytical approach to class struggle.',
     details:
       '<p>Published in 1848, The Communist Manifesto presents an analytical approach to the class struggle and the conflicts of capitalism.</p><p>It outlines the theory of historical materialism and calls for the overthrow of the bourgeoisie by the proletariat.</p>',
     date_start: '1848',
@@ -78,8 +75,7 @@ const events: SeedEvent[] = [
   {
     id: 'nietzsche-birth',
     title: 'Friedrich Nietzsche',
-    summary:
-      'German philosopher, cultural critic, and philologist who questioned traditional morality.',
+    summary: 'German philosopher, cultural critic, and philologist who questioned traditional morality.',
     details:
       '<p>Friedrich Nietzsche (1844-1900) was a German philosopher whose work addressed fundamental questions about truth, morality, culture, and the meaning of existence.</p><p>His concepts include the "will to power," the "Übermensch," and the famous declaration that "God is dead." His work has been highly influential in philosophy, literature, and psychology.</p>',
     date_start: '1844',
@@ -153,7 +149,7 @@ const events: SeedEvent[] = [
     type: 'book',
     tags: ['philosophy', 'ancient greece'],
   },
-];
+]
 
 const relationships: SeedRelationship[] = [
   {
@@ -198,28 +194,28 @@ const relationships: SeedRelationship[] = [
     type: 'influenced_by',
     notes: "Plato was Socrates' student and wrote about Socratic philosophy",
   },
-];
+]
 
 function seed() {
-  console.log('Initializing database...');
-  initializeDatabase();
+  console.log('Initializing database...')
+  initializeDatabase()
 
-  console.log('Clearing existing data...');
-  db.exec('DELETE FROM relationships');
-  db.exec('DELETE FROM event_tags');
-  db.exec('DELETE FROM tags');
-  db.exec('DELETE FROM media');
-  db.exec('DELETE FROM events');
+  console.log('Clearing existing data...')
+  db.exec('DELETE FROM relationships')
+  db.exec('DELETE FROM event_tags')
+  db.exec('DELETE FROM tags')
+  db.exec('DELETE FROM media')
+  db.exec('DELETE FROM events')
 
-  console.log('Inserting events...');
+  console.log('Inserting events...')
   const insertEvent = db.prepare(`
     INSERT INTO events (id, title, summary, details, date_start, date_end, date_precision, date_display, is_bce, type)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  `)
 
-  const insertTag = db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)');
-  const getTagId = db.prepare('SELECT id FROM tags WHERE name = ?');
-  const insertEventTag = db.prepare('INSERT INTO event_tags (event_id, tag_id) VALUES (?, ?)');
+  const insertTag = db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)')
+  const getTagId = db.prepare('SELECT id FROM tags WHERE name = ?')
+  const insertEventTag = db.prepare('INSERT INTO event_tags (event_id, tag_id) VALUES (?, ?)')
 
   for (const event of events) {
     insertEvent.run(
@@ -232,33 +228,32 @@ function seed() {
       event.date_precision,
       event.date_display || null,
       event.is_bce,
-      event.type
-    );
+      event.type,
+    )
 
     for (const tagName of event.tags) {
-      insertTag.run(tagName);
-      const tag = getTagId.get(tagName) as { id: number };
-      insertEventTag.run(event.id, tag.id);
+      insertTag.run(tagName)
+      const tag = getTagId.get(tagName) as { id: number }
+      insertEventTag.run(event.id, tag.id)
     }
   }
 
-  console.log('Inserting relationships...');
+  console.log('Inserting relationships...')
   const insertRelationship = db.prepare(`
     INSERT INTO relationships (source_id, target_id, type, notes)
     VALUES (?, ?, ?, ?)
-  `);
+  `)
 
   for (const rel of relationships) {
-    insertRelationship.run(rel.source_id, rel.target_id, rel.type, rel.notes || null);
+    insertRelationship.run(rel.source_id, rel.target_id, rel.type, rel.notes || null)
   }
 
-  console.log('Seed completed successfully!');
-  console.log(`  - ${events.length} events`);
-  console.log(`  - ${relationships.length} relationships`);
+  console.log('Seed completed successfully!')
+  console.log(`  - ${events.length} events`)
+  console.log(`  - ${relationships.length} relationships`)
 
-  const tagCount = (db.prepare('SELECT COUNT(*) as count FROM tags').get() as { count: number })
-    .count;
-  console.log(`  - ${tagCount} tags`);
+  const tagCount = (db.prepare('SELECT COUNT(*) as count FROM tags').get() as { count: number }).count
+  console.log(`  - ${tagCount} tags`)
 }
 
-seed();
+seed()

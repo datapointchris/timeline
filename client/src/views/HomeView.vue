@@ -1,154 +1,154 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import Timeline from '../components/Timeline.vue';
-import EventList from '../components/EventList.vue';
-import EventDetail from '../components/EventDetail.vue';
-import EventForm from '../components/EventForm.vue';
-import FilterBar from '../components/FilterBar.vue';
-import SlideOver from '../components/SlideOver.vue';
-import { useEvents } from '../composables/useEvents';
-import type { TimelineEvent, EventType } from 'shared/types';
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Timeline from '../components/Timeline.vue'
+import EventList from '../components/EventList.vue'
+import EventDetail from '../components/EventDetail.vue'
+import EventForm from '../components/EventForm.vue'
+import FilterBar from '../components/FilterBar.vue'
+import SlideOver from '../components/SlideOver.vue'
+import { useEvents } from '../composables/useEvents'
+import type { TimelineEvent, EventType } from 'shared/types'
 
-const { events, fetchEvents, searchEvents } = useEvents();
-const selectedEventIds = ref<string[]>([]);
-const viewMode = ref<'timeline' | 'list'>('timeline');
-const showMode = ref<'all' | 'selected'>('all');
-const showForm = ref(false);
-const editingEventId = ref<string | null>(null);
-const slideOverEventId = ref<string | null>(null);
+const { events, fetchEvents, searchEvents } = useEvents()
+const selectedEventIds = ref<string[]>([])
+const viewMode = ref<'timeline' | 'list'>('timeline')
+const showMode = ref<'all' | 'selected'>('all')
+const showForm = ref(false)
+const editingEventId = ref<string | null>(null)
+const slideOverEventId = ref<string | null>(null)
 
-const currentFilters = ref<{ search?: string; type?: EventType; tag?: string }>({});
-const searchResults = ref<TimelineEvent[] | null>(null);
+const currentFilters = ref<{ search?: string; type?: EventType; tag?: string }>({})
+const searchResults = ref<TimelineEvent[] | null>(null)
 
 const displayedEvents = computed(() => {
-  let result = searchResults.value !== null ? searchResults.value : events.value;
+  let result = searchResults.value !== null ? searchResults.value : events.value
   if (showMode.value === 'selected' && selectedEventIds.value.length > 0) {
-    result = result.filter(e => selectedEventIds.value.includes(e.id));
+    result = result.filter((e) => selectedEventIds.value.includes(e.id))
   }
-  return result;
-});
+  return result
+})
 
 async function handleFilter(params: { search?: string; type?: EventType; tag?: string }) {
-  currentFilters.value = params;
+  currentFilters.value = params
 
   if (params.search) {
-    const results = await searchEvents(params.search);
-    let filtered = results;
+    const results = await searchEvents(params.search)
+    let filtered = results
     if (params.type) {
-      filtered = filtered.filter(e => e.type === params.type);
+      filtered = filtered.filter((e) => e.type === params.type)
     }
     if (params.tag) {
-      filtered = filtered.filter(e => e.title.toLowerCase().includes(params.tag!.toLowerCase()));
+      filtered = filtered.filter((e) => e.title.toLowerCase().includes(params.tag!.toLowerCase()))
     }
-    searchResults.value = filtered;
+    searchResults.value = filtered
   } else {
-    searchResults.value = null;
-    await fetchEvents({ type: params.type, tag: params.tag });
+    searchResults.value = null
+    await fetchEvents({ type: params.type, tag: params.tag })
   }
 }
 
 function selectEvent(event: TimelineEvent) {
   if (!selectedEventIds.value.includes(event.id)) {
-    selectedEventIds.value = [...selectedEventIds.value, event.id];
+    selectedEventIds.value = [...selectedEventIds.value, event.id]
   }
 }
 
 function deselectEvent(event: TimelineEvent) {
-  selectedEventIds.value = selectedEventIds.value.filter(eid => eid !== event.id);
+  selectedEventIds.value = selectedEventIds.value.filter((eid) => eid !== event.id)
 }
 
 function closeDetail(id: string) {
-  selectedEventIds.value = selectedEventIds.value.filter(eid => eid !== id);
+  selectedEventIds.value = selectedEventIds.value.filter((eid) => eid !== id)
 }
 
 function closeAllDetails() {
-  selectedEventIds.value = [];
+  selectedEventIds.value = []
 }
 
 function sortChronologically() {
-  const allEvents = searchResults.value ?? events.value;
+  const allEvents = searchResults.value ?? events.value
   selectedEventIds.value = [...selectedEventIds.value].sort((a, b) => {
-    const eventA = allEvents.find(e => e.id === a);
-    const eventB = allEvents.find(e => e.id === b);
-    if (!eventA || !eventB) return 0;
+    const eventA = allEvents.find((e) => e.id === a)
+    const eventB = allEvents.find((e) => e.id === b)
+    if (!eventA || !eventB) return 0
 
-    const yearA = parseInt(eventA.date_start || '0') * (eventA.is_bce ? -1 : 1);
-    const yearB = parseInt(eventB.date_start || '0') * (eventB.is_bce ? -1 : 1);
-    return yearA - yearB;
-  });
+    const yearA = parseInt(eventA.date_start || '0') * (eventA.is_bce ? -1 : 1)
+    const yearB = parseInt(eventB.date_start || '0') * (eventB.is_bce ? -1 : 1)
+    return yearA - yearB
+  })
 }
 
 function filterByType(type: string) {
-  handleFilter({ ...currentFilters.value, type: type as EventType });
+  handleFilter({ ...currentFilters.value, type: type as EventType })
 }
 
 function filterByTag(tag: string) {
-  handleFilter({ ...currentFilters.value, tag });
+  handleFilter({ ...currentFilters.value, tag })
 }
 
 function showSlideOver(eventId: string) {
-  slideOverEventId.value = eventId;
+  slideOverEventId.value = eventId
 }
 
 function closeSlideOver() {
-  slideOverEventId.value = null;
+  slideOverEventId.value = null
 }
 
 function navigateSlideOver(eventId: string) {
-  slideOverEventId.value = eventId;
+  slideOverEventId.value = eventId
   if (!selectedEventIds.value.includes(eventId)) {
-    selectedEventIds.value = [...selectedEventIds.value, eventId];
+    selectedEventIds.value = [...selectedEventIds.value, eventId]
   }
 }
 
 function navigateToEvent(event: TimelineEvent) {
   if (!selectedEventIds.value.includes(event.id)) {
-    selectedEventIds.value = [...selectedEventIds.value, event.id];
+    selectedEventIds.value = [...selectedEventIds.value, event.id]
   }
 }
 
 function openCreateForm() {
-  editingEventId.value = null;
-  showForm.value = true;
+  editingEventId.value = null
+  showForm.value = true
 }
 
 function openEditForm(id: string) {
-  editingEventId.value = id;
-  showForm.value = true;
+  editingEventId.value = id
+  showForm.value = true
 }
 
 function closeForm() {
-  showForm.value = false;
-  editingEventId.value = null;
+  showForm.value = false
+  editingEventId.value = null
 }
 
 async function onEventSaved() {
-  await handleFilter(currentFilters.value);
+  await handleFilter(currentFilters.value)
   if (editingEventId.value && !selectedEventIds.value.includes(editingEventId.value)) {
-    selectedEventIds.value = [...selectedEventIds.value, editingEventId.value];
+    selectedEventIds.value = [...selectedEventIds.value, editingEventId.value]
   }
 }
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     if (slideOverEventId.value) {
-      closeSlideOver();
+      closeSlideOver()
     } else if (showForm.value) {
-      closeForm();
+      closeForm()
     } else if (selectedEventIds.value.length > 0) {
-      closeAllDetails();
+      closeAllDetails()
     }
   }
 }
 
 onMounted(() => {
-  fetchEvents();
-  window.addEventListener('keydown', handleKeydown);
-});
+  fetchEvents()
+  window.addEventListener('keydown', handleKeydown)
+})
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-});
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <template>
@@ -164,15 +164,13 @@ onUnmounted(() => {
             <button
               class="btn"
               :class="viewMode === 'timeline' ? 'btn-active' : 'btn-ghost'"
-              @click="viewMode = 'timeline'"
-            >
+              @click="viewMode = 'timeline'">
               Timeline
             </button>
             <button
               class="btn"
               :class="viewMode === 'list' ? 'btn-active' : 'btn-ghost'"
-              @click="viewMode = 'list'"
-            >
+              @click="viewMode = 'list'">
               Cards
             </button>
           </div>
@@ -180,48 +178,67 @@ onUnmounted(() => {
             <button
               class="btn"
               :class="showMode === 'all' ? 'btn-active' : 'btn-ghost'"
-              @click="showMode = 'all'"
-            >
+              @click="showMode = 'all'">
               Show All
             </button>
             <button
               class="btn"
               :class="showMode === 'selected' ? 'btn-active' : 'btn-ghost'"
               :disabled="selectedEventIds.length === 0"
-              @click="showMode = 'selected'"
-            >
+              @click="showMode = 'selected'">
               Show Selected ({{ selectedEventIds.length }})
             </button>
           </div>
-          <button class="btn btn-primary" @click="openCreateForm">+ Add Event</button>
+          <button
+            class="btn btn-primary"
+            @click="openCreateForm">
+            + Add Event
+          </button>
         </div>
       </div>
     </header>
 
-    <div v-if="showForm" class="main container">
+    <div
+      v-if="showForm"
+      class="main container">
       <div class="form-overlay">
-        <EventForm :event-id="editingEventId" @close="closeForm" @saved="onEventSaved" />
+        <EventForm
+          :event-id="editingEventId"
+          @close="closeForm"
+          @saved="onEventSaved" />
       </div>
     </div>
 
     <template v-else>
       <div class="filter-bar-container container">
-        <FilterBar :type="currentFilters.type" :tag="currentFilters.tag" @filter="handleFilter" />
+        <FilterBar
+          :type="currentFilters.type"
+          :tag="currentFilters.tag"
+          @filter="handleFilter" />
       </div>
 
-      <div v-if="viewMode === 'timeline'" class="timeline-section">
+      <div
+        v-if="viewMode === 'timeline'"
+        class="timeline-section">
         <Timeline
           :events="displayedEvents"
           :selected-event-ids="selectedEventIds"
           @select="selectEvent"
-          @deselect="deselectEvent"
-        />
+          @deselect="deselectEvent" />
       </div>
 
       <template v-if="selectedEventIds.length > 0">
         <div class="details-row-header">
-          <button class="btn btn-ghost" @click="sortChronologically">Sort Chronologically</button>
-          <button class="btn btn-ghost" @click="closeAllDetails">Clear All</button>
+          <button
+            class="btn btn-ghost"
+            @click="sortChronologically">
+            Sort Chronologically
+          </button>
+          <button
+            class="btn btn-ghost"
+            @click="closeAllDetails">
+            Clear All
+          </button>
         </div>
         <div class="details-row">
           <EventDetail
@@ -233,14 +250,17 @@ onUnmounted(() => {
             @edit="openEditForm(eventId)"
             @filter-by-type="filterByType"
             @filter-by-tag="filterByTag"
-            @show-details="showSlideOver"
-          />
+            @show-details="showSlideOver" />
         </div>
       </template>
 
-      <main v-if="viewMode === 'list'" class="main container">
+      <main
+        v-if="viewMode === 'list'"
+        class="main container">
         <div class="events-section">
-          <EventList :events="displayedEvents" @select="selectEvent" />
+          <EventList
+            :events="displayedEvents"
+            @select="selectEvent" />
         </div>
       </main>
     </template>
@@ -249,8 +269,7 @@ onUnmounted(() => {
       v-if="slideOverEventId"
       :event-id="slideOverEventId"
       @close="closeSlideOver"
-      @navigate="navigateSlideOver"
-    />
+      @navigate="navigateSlideOver" />
   </div>
 </template>
 
