@@ -5,7 +5,7 @@ on:
 
 # Manual redeploy trigger.
 #
-# Normal deploys: push to main → CI builds and pushes image to ghcr.io →
+# Normal deploys: push to main → docker-publish.yml builds and pushes image to ghcr.io →
 # GitHub fires `workflow_run.completed` → app-ops webhook receives it →
 # `deploy-timeline.sh` SSHes to timeline-lxc and runs `docker compose pull && up -d`.
 #
@@ -14,6 +14,9 @@ on:
 # restart the stack on timeline-lxc. It does not rebuild — it only fires the
 # webhook so the LXC pulls the current :latest image and restarts the
 # container.
+#
+# The payload names docker-publish.yml as its workflow. The receiver refuses
+# any other path, which keeps the generated CI's completion from deploying.
 
 jobs:
   redeploy:
@@ -22,7 +25,7 @@ jobs:
     steps:
       - name: Trigger homelab deploy webhook
         run: |
-          PAYLOAD="{\"action\":\"completed\",\"workflow_run\":{\"id\":${{ github.run_id }},\"conclusion\":\"success\",\"head_branch\":\"main\"},\"repository\":{\"full_name\":\"${{ github.repository }}\",\"name\":\"timeline\"}}"
+          PAYLOAD="{\"action\":\"completed\",\"workflow_run\":{\"id\":${{ github.run_id }},\"path\":\".github/workflows/docker-publish.yml\",\"conclusion\":\"success\",\"head_branch\":\"main\"},\"repository\":{\"full_name\":\"${{ github.repository }}\",\"name\":\"timeline\"}}"
           SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac '${{ secrets.WEBHOOK_SECRET }}' | cut -d' ' -f2)
           curl --fail -X POST https://hooks.ichrisbirch.com/hooks/timeline \
             -H "Content-Type: application/json" \
