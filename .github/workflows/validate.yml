@@ -110,6 +110,12 @@ jobs:
 
       - run: npm run build
 
+      # > custom:after:node-server - the server's tests
+      # The generated job builds and lints without testing, so the vitest
+      # suite runs here. The image workflow gates on this one.
+      - name: Tests
+        run: npm run test
+
   node-shared:
     runs-on: ubuntu-latest
     defaults:
