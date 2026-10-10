@@ -1,9 +1,7 @@
-# forge-toolchain: 33
+# forge-toolchain: 34
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_call:
 
@@ -24,7 +22,11 @@ jobs:
       # generated:vue-client
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          # The repo's own file, at the workspace root, because the Node major
+          # also lives in each Dockerfile's FROM line and a pin here would be a
+          # third copy. The ci die refuses to write this job without the file,
+          # since setup-node fails before installing anything.
+          node-version-file: .nvmrc
           cache: npm
           # A glob rather than client/package-lock.json, because the two
           # layouts in use keep the lock in different places: one lock per
@@ -73,7 +75,11 @@ jobs:
       # generated:node-server
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          # The repo's own file, at the workspace root, because the Node major
+          # also lives in each Dockerfile's FROM line and a pin here would be a
+          # third copy. The ci die refuses to write this job without the file,
+          # since setup-node fails before installing anything.
+          node-version-file: .nvmrc
           cache: npm
           # A glob rather than server/package-lock.json, because the two
           # layouts in use keep the lock in different places: one lock per
@@ -128,7 +134,11 @@ jobs:
       # generated:node-shared
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          # The repo's own file, at the workspace root, because the Node major
+          # also lives in each Dockerfile's FROM line and a pin here would be a
+          # third copy. The ci die refuses to write this job without the file,
+          # since setup-node fails before installing anything.
+          node-version-file: .nvmrc
           cache: npm
           # A glob rather than shared/package-lock.json, because the two
           # layouts in use keep the lock in different places: one lock per
