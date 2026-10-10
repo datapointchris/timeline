@@ -43,5 +43,5 @@ COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
-  CMD wget -qO- http://localhost:3000/api/health || exit 1
+  CMD ["wget", "-qO-", "http://localhost:3000/api/health"]
 CMD ["node", "server/dist/index.js"]
