@@ -1,0 +1,18 @@
+# The production image built from this checkout and run on this desk, so a
+# change to the Dockerfile or the runtime layout is seen before it ships.
+# docker-compose.yml beside it is the production deployment and stays as it is.
+#
+# .env is copied from .env.example, whose values are the container's paths.
+# ./data holds the dev database `npm run dev` uses, and the container applies
+# any pending migrations to it on start.
+name: timeline-local
+
+services:
+  timeline:
+    build: .
+    image: timeline:local
+    ports:
+      - '3000:3000'
+    env_file: .env
+    volumes:
+      - ./data:/app/data

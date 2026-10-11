@@ -1,6 +1,6 @@
 version: '3'
 
-# Three npm workspaces — client, server, shared — plus a compose stack and
+# Three npm workspaces — client, server, shared — plus a local container and
 # drizzle migrations, none of which npm reaches.
 #
 # Every JS verb delegates to the root package.json script rather than
@@ -39,14 +39,10 @@ tasks:
     cmds:
       - npm run lint
 
-  lint:fix:
-    desc: Lint and autofix every workspace
+  format:
+    desc: Apply the lint autofixes, then format every workspace
     cmds:
       - npm run lint:fix
-
-  format:
-    desc: Format every workspace
-    cmds:
       - npm run format
 
   typecheck:
@@ -64,14 +60,6 @@ tasks:
     cmds:
       - npm run build
 
-  check:
-    desc: Everything CI checks, in CI's order
-    cmds:
-      - task: lint
-      - task: typecheck
-      - task: test
-      - task: build
-
   db:generate:
     desc: Generate a drizzle migration from the current schema
     # Never `drizzle-kit push`: it skips the __drizzle_migrations ledger, so the
@@ -86,17 +74,17 @@ tasks:
     cmds:
       - npm run db:seed
 
-  compose:up:
-    desc: Start the stack in the background
+  # The root docker-compose.yml is the production deployment, so these name the
+  # local file. Its logs are `docker compose -f docker-compose.local.yml logs -f`.
+  container:start:
+    desc: Build the image from this checkout and run it on :3000 until healthy
+    preconditions:
+      - sh: test -f .env
+        msg: 'No .env at the repo root. Copy .env.example to .env.'
     cmds:
-      - docker compose up -d
+      - docker compose -f docker-compose.local.yml up -d --build --wait
 
-  compose:down:
-    desc: Stop the stack
+  container:stop:
+    desc: Stop the local container
     cmds:
-      - docker compose down
-
-  compose:logs:
-    desc: Follow the stack's logs
-    cmds:
-      - docker compose logs -f
+      - docker compose -f docker-compose.local.yml down

@@ -36,6 +36,11 @@ initialization path. Subsequent migrations should be normal Drizzle output.
 `npm run dev` runs the server on :3000 and Vite on :5173, which proxies `/api`.
 `npm --prefix server run db:seed` seeds the dev DB with sample events and relationships.
 
+`task container:start` builds the production image from the checkout and runs it on :3000 against
+`data/`, from `docker-compose.local.yml`. It needs a `.env` copied from `.env.example`, whose values
+are the container's paths. It takes the port `npm run dev` uses, so run one at a time.
+`docker-compose.yml` is the production deployment, and no local command reads it.
+
 ## Deployment
 
 **Live at <https://timeline.ichrisbirch.com>** behind Authelia ForwardAuth.
