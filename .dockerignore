@@ -24,8 +24,7 @@ data
 *.swp
 *.swo
 
-# Tests / planning artifacts
-.planning
+# Test artifacts
 test-results
 coverage
 
