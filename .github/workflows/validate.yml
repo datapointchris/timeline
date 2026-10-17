@@ -57,6 +57,14 @@ jobs:
 
       - run: npm run build
 
+      # test:unit where the component has one, because test is where a
+      # frontend hangs its browser run or a second build; otherwise test. A
+      # component with neither has no suite, which is not a failure.
+      - name: Test
+        run: |
+          script=$(node -p "const s = require('./package.json').scripts ?? {}; s['test:unit'] ? 'test:unit' : s.test ? 'test' : ''")
+          if [ -n "$script" ]; then npm run "$script"; fi
+
   node-server:
     runs-on: ubuntu-26.04
     defaults:
@@ -104,11 +112,13 @@ jobs:
 
       - run: npm run build
 
-      # > custom:after:node-server - the server's tests
-      # The generated job builds and lints without testing, so the vitest
-      # suite runs here. The image workflow gates on this one.
-      - name: Tests
-        run: npm run test
+      # test:unit where the component has one, because test is where a
+      # frontend hangs its browser run or a second build; otherwise test. A
+      # component with neither has no suite, which is not a failure.
+      - name: Test
+        run: |
+          script=$(node -p "const s = require('./package.json').scripts ?? {}; s['test:unit'] ? 'test:unit' : s.test ? 'test' : ''")
+          if [ -n "$script" ]; then npm run "$script"; fi
 
   node-shared:
     runs-on: ubuntu-26.04
@@ -156,6 +166,14 @@ jobs:
           fi
 
       - run: npm run build
+
+      # test:unit where the component has one, because test is where a
+      # frontend hangs its browser run or a second build; otherwise test. A
+      # component with neither has no suite, which is not a failure.
+      - name: Test
+        run: |
+          script=$(node -p "const s = require('./package.json').scripts ?? {}; s['test:unit'] ? 'test:unit' : s.test ? 'test' : ''")
+          if [ -n "$script" ]; then npm run "$script"; fi
 
   hooks:
     runs-on: ubuntu-26.04
