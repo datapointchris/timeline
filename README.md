@@ -25,18 +25,15 @@ scripts and `docker compose` commands. `task --list` is the index of what can be
 In a fresh clone, after `npm ci`:
 
 ```bash
-mkdir data                        # the server creates data/timeline.db, never the directory
-npm --prefix server run db:seed   # migrate the dev database, then replace its contents with samples
+npm --prefix server run db:seed   # create and migrate data/timeline.db, then replace its rows with samples
 npm run dev                       # API on :3000, Vite on :5173 proxying /api to it, both reload on edit
 curl localhost:5173/api/ready     # {"status":"ready","database":"connected",...}, through the proxy
 ```
 
 Then open <http://localhost:5173>. The sample events are on the timeline.
 
-`data/` is gitignored, so a fresh clone has none. better-sqlite3 creates a missing database file but
-refuses a missing directory: `Cannot open database because the directory does not exist`.
-`DATABASE_PATH` puts the file anywhere else. The database runs in WAL mode, so SQLite keeps
-`timeline.db-wal` and `timeline.db-shm` beside it.
+`data/` is gitignored. `DATABASE_PATH` puts the file anywhere else. The database runs in WAL mode,
+so SQLite keeps `timeline.db-wal` and `timeline.db-shm` beside it.
 
 `db:seed` deletes every event, tag, relationship and media row before it inserts the samples. A
 second run resets the database. It never adds a second copy. Point it only at a database you can
