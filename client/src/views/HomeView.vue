@@ -7,6 +7,7 @@ import EventForm from '../components/EventForm.vue'
 import FilterBar from '../components/FilterBar.vue'
 import SlideOver from '../components/SlideOver.vue'
 import { useEvents } from '../composables/useEvents'
+import { api } from '../api/client'
 import type { TimelineEvent, EventType } from 'shared/types'
 
 const { events, fetchEvents, searchEvents } = useEvents()
@@ -32,15 +33,14 @@ async function handleFilter(params: { search?: string; type?: EventType; tag?: s
   currentFilters.value = params
 
   if (params.search) {
-    const results = await searchEvents(params.search)
-    let filtered = results
-    if (params.type) {
-      filtered = filtered.filter((e) => e.type === params.type)
+    let results = await searchEvents(params.search)
+    // A search result carries no tags, so the list endpoint applies the type and tag filters.
+    if (params.type || params.tag) {
+      const matching = await api.events.list({ type: params.type, tag: params.tag })
+      const matchingIds = new Set(matching.map((e) => e.id))
+      results = results.filter((e) => matchingIds.has(e.id))
     }
-    if (params.tag) {
-      filtered = filtered.filter((e) => e.title.toLowerCase().includes(params.tag!.toLowerCase()))
-    }
-    searchResults.value = filtered
+    searchResults.value = results
   } else {
     searchResults.value = null
     await fetchEvents({ type: params.type, tag: params.tag })
