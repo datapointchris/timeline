@@ -53,8 +53,8 @@ address, `/event/<id>`. The API answers 409 to a second event with the same id.
 
 Dates are text. `date_start` and `date_end` take `1886` or `1886-07-04`. `is_bce` marks the era, so
 470 BCE is `470` with the flag set, never `-470`. `date_precision` records how sure the date is, from
-`exact` to `uncertain`. `date_display` overrides the date the timeline and the detail views print, as
-in `c. 500 BCE`. The timeline pans from 1000 BCE to 2100 CE.
+`exact` to `uncertain`. `date_display` overrides the printed date in every view, as in
+`c. 500 BCE`. The timeline pans from 1000 BCE to 2100 CE.
 
 An event's `details` are rich text, written in a TipTap editor and stored as HTML. Tags are free
 names. A tag is created the first time an event uses it.

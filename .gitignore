@@ -18,7 +18,7 @@ dist/
 *.tsbuildinfo
 
 # The dev database and its WAL sidecars. Production lives at
-# /var/db/timeline/timeline.db on the LXC and never enters the repo.
+# /var/db/timeline/timeline.db on the production host and never enters the repo.
 # Regenerate a local one with `npm --prefix server run db:seed`.
 data/
 *.db

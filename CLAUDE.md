@@ -6,8 +6,8 @@ API + SQLite, served as a single Node container in production.
 ## Critical Rules
 
 - **NEVER commit `data/timeline.db`** — gitignored. The dev DB is local-only.
-  Production data lives at `/var/db/timeline/timeline.db` on timeline-lxc and
-  never enters the image or the deploy artifact.
+  Production data lives at `/var/db/timeline/timeline.db` on the production host
+  and never enters the image or the deploy artifact.
 - **Never edit a live migration file under `server/migrations/`** after it has
   been pushed to main. Migrations are append-only — fix forward by writing a
   new one.
@@ -45,15 +45,15 @@ are the container's paths. It takes the port `npm run dev` uses, so run one at a
 
 **Live at <https://timeline.ichrisbirch.com>** behind Authelia ForwardAuth.
 Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose pull && up`
-on timeline-lxc.
+on the production host.
 
 Things to know when changing this repo:
 
 - **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages.
-- **Backups run nightly** via backup-lxc → NAS → Backblaze B2 (30-snapshot
-  retention). Restore procedure documented in `~/homelab/docs/backups.md`.
-  SQLite snapshots use `sqlite3 .backup` (not raw `cp`) to avoid torn-page
-  issues with WAL.
+- **Backups run nightly** from a backup host to network storage, then to
+  offsite object storage (30-snapshot retention). The restore procedure lives
+  with the host's infrastructure docs, outside this repo. SQLite snapshots use
+  `sqlite3 .backup` (not raw `cp`) to avoid torn-page issues with WAL.
 - **`shared` workspace is type-only at runtime.** Every server import from
   `'shared'` is `import type { ... }`, so TypeScript erases it at emit. The
   Docker runtime image deliberately does not include `shared/` in its layout

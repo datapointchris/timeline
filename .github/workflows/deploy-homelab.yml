@@ -6,13 +6,13 @@ on:
 # Manual redeploy trigger.
 #
 # Normal deploys: push to main → docker-publish.yml builds and pushes image to ghcr.io →
-# GitHub fires `workflow_run.completed` → app-ops webhook receives it →
-# `deploy-timeline.sh` SSHes to timeline-lxc and runs `docker compose pull && up -d`.
+# GitHub fires `workflow_run.completed` → the deploy webhook receives it →
+# its deploy script runs `docker compose pull && up -d` on the production host.
 #
 # This workflow is for "redeploy whatever is currently :latest on ghcr.io
 # without making a new commit". Useful after a manual image push, or to
-# restart the stack on timeline-lxc. It does not rebuild — it only fires the
-# webhook so the LXC pulls the current :latest image and restarts the
+# restart the stack on the production host. It does not rebuild — it only fires
+# the webhook so the host pulls the current :latest image and restarts the
 # container.
 #
 # The payload names docker-publish.yml as its workflow. The receiver refuses
