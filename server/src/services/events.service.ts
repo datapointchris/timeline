@@ -20,26 +20,31 @@ const INVERSES: Record<string, string> = {
   response_to: 'prompted',
 }
 
-export function getAllEvents(filters?: { tag?: string; type?: string; after?: string; before?: string }): TimelineEvent[] {
+// date_start is text, and a text comparison puts 476 after 1886. Ties within a year fall back to the
+// text, which orders month and day.
+const SIGNED_YEAR = 'CASE WHEN is_bce THEN -CAST(date_start AS INTEGER) ELSE CAST(date_start AS INTEGER) END'
+const CHRONOLOGICAL = `ORDER BY ${SIGNED_YEAR} ASC, date_start ASC`
+
+export function getAllEvents(filters?: { tag?: string; type?: string; after?: number; before?: number }): TimelineEvent[] {
   let query = 'SELECT * FROM events WHERE 1=1'
-  const params: Record<string, string> = {}
+  const params: Record<string, string | number> = {}
 
   if (filters?.type) {
     query += ' AND type = :type'
     params.type = filters.type
   }
 
-  if (filters?.after) {
-    query += ' AND date_start >= :after'
+  if (filters?.after !== undefined) {
+    query += ` AND ${SIGNED_YEAR} >= :after`
     params.after = filters.after
   }
 
-  if (filters?.before) {
-    query += ' AND date_start <= :before'
+  if (filters?.before !== undefined) {
+    query += ` AND ${SIGNED_YEAR} <= :before`
     params.before = filters.before
   }
 
-  query += ' ORDER BY date_start ASC, is_bce DESC'
+  query += ` ${CHRONOLOGICAL}`
 
   let events = db.prepare(query).all(params) as TimelineEvent[]
 
@@ -278,7 +283,7 @@ export function searchEvents(query: string): TimelineEvent[] {
       `
     SELECT * FROM events
     WHERE title LIKE ? OR summary LIKE ? OR details LIKE ?
-    ORDER BY date_start ASC, is_bce DESC
+    ${CHRONOLOGICAL}
   `,
     )
     .all(pattern, pattern, pattern) as TimelineEvent[]

@@ -83,10 +83,14 @@ details beside any already open, so several read side by side.
 
 ```bash
 curl localhost:3000/api/events                        # every event; ?type= and ?tag= narrow it
+curl 'localhost:3000/api/events?after=-500&before=0'  # events from 500 BCE through 1 BCE
 curl 'localhost:3000/api/events/search?q=revolution'  # substring match on title, summary and details
 curl localhost:3000/api/events/french-revolution      # one event, its tags, media and links both ways
 curl localhost:3000/api/tags                          # every tag
 ```
+
+Lists come back in date order. `after` and `before` take a year and include it, with a BCE year
+negative. An event's year is the leading number of its `date_start`.
 
 Writes are `POST`, `PUT` and `DELETE` on the same nouns. `server/src/routes/` holds every route. An
 event read carries a `media` list, and no route writes to it.

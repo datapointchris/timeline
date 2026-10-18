@@ -6,11 +6,19 @@ import type { CreateEventInput, UpdateEventInput } from 'shared'
 const router = Router()
 
 router.get('/', (req: Request, res: Response) => {
+  const after = req.query.after === undefined ? undefined : parseInt(req.query.after as string, 10)
+  const before = req.query.before === undefined ? undefined : parseInt(req.query.before as string, 10)
+
+  if (Number.isNaN(after) || Number.isNaN(before)) {
+    res.status(400).json({ error: 'after and before take a year, negative for BCE' })
+    return
+  }
+
   const filters = {
     tag: req.query.tag as string | undefined,
     type: req.query.type as string | undefined,
-    after: req.query.after as string | undefined,
-    before: req.query.before as string | undefined,
+    after,
+    before,
   }
 
   const events = getAllEvents(filters)

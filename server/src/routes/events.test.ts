@@ -67,14 +67,16 @@ describe('Events API', () => {
       expect(response.body).toEqual([])
     })
 
-    it('should return all events', async () => {
-      await request(app).post('/api/events').send({ id: 'e1', title: 'Event 1' })
-      await request(app).post('/api/events').send({ id: 'e2', title: 'Event 2' })
+    it('should order and filter by year, with BCE years negative', async () => {
+      await request(app).post('/api/events').send({ id: 'modern', title: 'Modern', date_start: '1886' })
+      await request(app).post('/api/events').send({ id: 'late-antique', title: 'Late antique', date_start: '476' })
+      await request(app).post('/api/events').send({ id: 'classical', title: 'Classical', date_start: '470', is_bce: true })
 
-      const response = await request(app).get('/api/events')
+      const all = await request(app).get('/api/events')
+      expect(all.body.map((e: { id: string }) => e.id)).toEqual(['classical', 'late-antique', 'modern'])
 
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveLength(2)
+      const window = await request(app).get('/api/events?after=0&before=1000')
+      expect(window.body.map((e: { id: string }) => e.id)).toEqual(['late-antique'])
     })
 
     it('should filter by type', async () => {
