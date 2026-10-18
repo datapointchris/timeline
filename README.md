@@ -62,7 +62,7 @@ names. A tag is created the first time an event uses it.
 A relationship is stored once, from a source event to a target, with a type and optional notes.
 Reading an event returns both directions. Outgoing links arrive as `relationships`. Incoming links
 arrive as `inverse_relationships`, relabeled with the inverse type. So a stored `influenced_by` from
-*Beyond Good and Evil* to *The World as Will and Representation* reads as `influenced` from the
+_Beyond Good and Evil_ to _The World as Will and Representation_ reads as `influenced` from the
 second. The API refuses three kinds of relationship:
 
 - one from an event to itself, with 400
