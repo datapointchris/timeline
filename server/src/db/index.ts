@@ -9,7 +9,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true'
 
-const DB_PATH = process.env.DATABASE_PATH ?? (isTest ? ':memory:' : path.join(__dirname, '..', '..', '..', 'data', 'timeline.db'))
+// A test empties the database before it runs, so a suite never opens a file, whatever
+// DATABASE_PATH names.
+const DB_PATH = isTest ? ':memory:' : (process.env.DATABASE_PATH ?? path.join(__dirname, '..', '..', '..', 'data', 'timeline.db'))
 
 const MIGRATIONS_FOLDER = process.env.MIGRATIONS_FOLDER ?? path.join(__dirname, '..', '..', 'migrations')
 

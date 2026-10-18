@@ -157,10 +157,7 @@ which pulls that image. No local command reads it.
 ## Checks — only the server has tests, and they run in memory
 
 ```bash
-npm test      # the server's suite, on an in-memory database
+npm test      # the server's suite, on an in-memory database whatever DATABASE_PATH names
 task lint     # eslint, prettier --check and every workspace's type check, writing nothing
 task format   # apply the lint autofixes, then prettier --write
 ```
-
-The tests open `DATABASE_PATH` when it is set, and an in-memory database when it is not. Each test
-empties the database it opened. Run `npm test` with `DATABASE_PATH` unset.
