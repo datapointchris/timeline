@@ -43,7 +43,7 @@ are the container's paths. It takes the port `npm run dev` uses, so run one at a
 
 ## Deployment
 
-**Live at <https://timeline.ichrisbirch.com>** behind Authelia ForwardAuth.
+**Production runs behind an authenticating reverse proxy.**
 Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose pull && up`
 on the production host.
 
