@@ -1,4 +1,4 @@
-# forge-toolchain: 49
+# forge-toolchain: 52
 name: CI
 
 on:
@@ -475,7 +475,7 @@ jobs:
             vue-prettier-shared
             vue-typecheck-shared
             hadolint-docker
-            actionlint
+            jactionlint
             sqlfluff-lint
           )
           # Every hook runs whatever the one before it found, so one push
