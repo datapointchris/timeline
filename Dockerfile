@@ -30,8 +30,9 @@ ENV NODE_ENV=production
 #  - shared/ is intentionally absent: every server import from 'shared' is
 #    `import type` which TypeScript erases at emit, so the runtime bundle has
 #    zero references to the shared package.
-#  - migrations live at /app/migrations to match the default MIGRATIONS_FOLDER
-#    env value used in docker-compose.
+#  - migrations live at /app/migrations, the MIGRATIONS_FOLDER value that
+#    .env.example sets for the container's env file. The server's own default,
+#    two levels above server/dist, would look in /app/server/migrations.
 #  - client-dist is at /app/client-dist to match the default STATIC_DIR in
 #    server/src/index.ts.
 COPY --from=builder /app/node_modules ./node_modules
