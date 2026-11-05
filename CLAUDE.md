@@ -1,45 +1,24 @@
 # Timeline App
 
-Interactive historical timeline with relationship mapping. Vue 3 SPA + Express
-API + SQLite, served as a single Node container in production.
+Interactive historical timeline with relationship mapping. `README.md` is the reference for the
+data model, the API, the schema and migrations, the container and the checks. The rules below are
+the constraints to keep when changing the repo.
 
 ## Critical Rules
 
 - **NEVER commit `data/timeline.db`** — gitignored. The dev DB is local-only.
   Production data lives at `/var/db/timeline/timeline.db` on the production host
   and never enters the image or the deploy artifact.
-- **Never edit a live migration file under `server/migrations/`** after it has
-  been pushed to main. Migrations are append-only — fix forward by writing a
-  new one.
-- **Schema changes go through `npm --prefix server run db:generate`** after
-  editing `server/src/db/schema.ts` → commit the SQL → next deploy applies it
-  on container start.
-
-### Drizzle hybrid mode
-
-Timeline uses Drizzle for **schema authorship + migrations only**. Existing
-service-layer queries in `server/src/services/*.service.ts` continue to use
-raw `db.prepare(...)` from better-sqlite3 — they were not rewritten to the
-Drizzle query builder. Both modes coexist on the same connection: `db` is
-exported as a raw `Database`, and `initializeDatabase()` wraps it minimally
-to call `migrate()`. New queries can choose either style; preserve this
-boundary intentionally rather than mixing within a single service file.
-
-The bridge migration `server/migrations/0000_goofy_spectrum.sql` was hand-edited
-once to add `IF NOT EXISTS` clauses, so it is safe to apply against pre-Drizzle
-dev databases without crashing. **Do not add `IF NOT EXISTS` to future
-migrations** — that exception was a one-time bridge from the old raw-SQL
-initialization path. Subsequent migrations should be normal Drizzle output.
-
-## Development
-
-`npm run dev` runs the server on :3000 and Vite on :5173, which proxies `/api`.
-`npm --prefix server run db:seed` seeds the dev DB with sample events and relationships.
-
-`task container:start` builds the production image from the checkout and runs it on :3000 against
-`data/`, from `docker-compose.local.yml`. It needs a `.env` copied from `.env.example`, whose values
-are the container's paths. It takes the port `npm run dev` uses, so run one at a time.
-`docker-compose.yml` is the production deployment, and no local command reads it.
+- **Never edit a migration under `server/migrations/` once it is on main.** Fix forward with a new
+  one.
+- **Schema changes go through `npm --prefix server run db:generate`** after editing
+  `server/src/db/schema.ts`, and the generated SQL is committed with them.
+- **Never add `IF NOT EXISTS` to a new migration.** `0000_goofy_spectrum.sql` is the one hand-edited
+  exception. README § "The schema" says why.
+- **One service file keeps to one query style**, Drizzle or `db.prepare(...)`. README § "The schema"
+  describes the split.
+- **The server imports only types from `shared`.** The runtime image ships no `shared/`. README §
+  "The container" describes the layout.
 
 ## Deployment
 
@@ -47,17 +26,6 @@ are the container's paths. It takes the port `npm run dev` uses, so run one at a
 Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose pull && up`
 on the production host.
 
-Things to know when changing this repo:
-
 - **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages.
-- **Backups run nightly** from a backup host to network storage, then to
-  offsite object storage (30-snapshot retention). The restore procedure lives
-  with the host's infrastructure docs, outside this repo. SQLite snapshots use
-  `sqlite3 .backup` (not raw `cp`) to avoid torn-page issues with WAL.
-- **`shared` workspace is type-only at runtime.** Every server import from
-  `'shared'` is `import type { ... }`, so TypeScript erases it at emit. The
-  Docker runtime image deliberately does not include `shared/` in its layout
-  — only the compiled `server/dist/` and `client/dist/` plus pruned
-  `node_modules/`.
-- **`/api/health` is liveness** and answers 200 whatever the DB state; the compose
-  healthcheck probes it. **`/api/ready` is readiness**: it pings the DB and returns 503 on failure.
+- **SQLite snapshots must use `sqlite3 .backup`**, never a raw `cp`, because the database runs in
+  WAL mode and a copy can tear a page.
