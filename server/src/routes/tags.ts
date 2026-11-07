@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { getAllTags, getTagsForEvent, addTagToEvent, removeTagFromEvent } from '../services/tags.service.js'
+import { NotFoundError } from '../errors.js'
 
 const router = Router()
 
@@ -26,8 +27,8 @@ router.post('/events/:eventId/tags', (req: Request, res: Response) => {
     const tag = addTagToEvent(req.params.eventId, name.trim())
     res.status(201).json(tag)
   } catch (error) {
-    if (error instanceof Error && error.message.includes('not found')) {
-      res.status(404).json({ error: error.message })
+    if (error instanceof NotFoundError) {
+      res.status(404).json({ error: error.message, code: error.code })
       return
     }
     throw error

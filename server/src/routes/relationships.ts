@@ -6,6 +6,7 @@ import {
   deleteRelationship,
   getRelationshipById,
 } from '../services/relationships.service.js'
+import { InvalidRelationshipTypeError, NotFoundError, SelfRelationshipError, isDuplicateKey } from '../errors.js'
 import type { CreateRelationshipInput } from 'shared'
 
 const router = Router()
@@ -27,19 +28,17 @@ router.post('/', (req: Request, res: Response) => {
     const relationship = createRelationship(input)
     res.status(201).json(relationship)
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('not found')) {
-        res.status(404).json({ error: error.message })
-        return
-      }
-      if (error.message.includes('Invalid relationship type') || error.message.includes('self')) {
-        res.status(400).json({ error: error.message })
-        return
-      }
-      if (error.message.includes('UNIQUE constraint failed')) {
-        res.status(409).json({ error: 'This relationship already exists' })
-        return
-      }
+    if (error instanceof NotFoundError) {
+      res.status(404).json({ error: error.message, code: error.code })
+      return
+    }
+    if (error instanceof InvalidRelationshipTypeError || error instanceof SelfRelationshipError) {
+      res.status(400).json({ error: error.message, code: error.code })
+      return
+    }
+    if (isDuplicateKey(error)) {
+      res.status(409).json({ error: 'This relationship already exists', code: 'duplicate' })
+      return
     }
     throw error
   }

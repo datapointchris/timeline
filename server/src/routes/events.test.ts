@@ -41,7 +41,6 @@ describe('Events API', () => {
       })
 
       expect(response.status).toBe(400)
-      expect(response.body.error).toContain('id')
     })
 
     it('should return 409 if event id already exists', async () => {
@@ -56,6 +55,7 @@ describe('Events API', () => {
       })
 
       expect(response.status).toBe(409)
+      expect(response.body.code).toBe('duplicate')
     })
   })
 

@@ -1,4 +1,5 @@
 import { db } from '../db/index.js'
+import { NotFoundError } from '../errors.js'
 import type { Tag } from 'shared'
 
 export function getAllTags(): Tag[] {
@@ -39,7 +40,7 @@ export function getTagsForEvent(eventId: string): Tag[] {
 export function addTagToEvent(eventId: string, tagName: string): Tag {
   const eventExists = db.prepare('SELECT 1 FROM events WHERE id = ?').get(eventId)
   if (!eventExists) {
-    throw new Error(`Event not found: ${eventId}`)
+    throw new NotFoundError(`Event not found: ${eventId}`)
   }
 
   let tag = getTagByName(tagName)

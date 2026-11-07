@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, searchEvents } from '../services/events.service.js'
+import { isDuplicateKey } from '../errors.js'
 import type { CreateEventInput, UpdateEventInput } from 'shared'
 
 const router = Router()
@@ -60,8 +61,8 @@ router.post('/', (req: Request, res: Response) => {
     const event = createEvent(input)
     res.status(201).json(event)
   } catch (error) {
-    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
-      res.status(409).json({ error: 'Event with this id already exists' })
+    if (isDuplicateKey(error)) {
+      res.status(409).json({ error: 'Event with this id already exists', code: 'duplicate' })
       return
     }
     throw error

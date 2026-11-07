@@ -1,4 +1,5 @@
 import { db } from '../db/index.js'
+import { InvalidRelationshipTypeError, NotFoundError, SelfRelationshipError } from '../errors.js'
 import type { Relationship, CreateRelationshipInput, RelationshipType } from 'shared'
 
 const VALID_TYPES: RelationshipType[] = ['influenced_by', 'caused', 'contemporary_with', 'preceded', 'part_of', 'related', 'response_to']
@@ -28,21 +29,21 @@ export function getRelationshipsByEventId(eventId: string): {
 
 export function createRelationship(input: CreateRelationshipInput): Relationship {
   if (!VALID_TYPES.includes(input.type)) {
-    throw new Error(`Invalid relationship type: ${input.type}`)
+    throw new InvalidRelationshipTypeError(`Invalid relationship type: ${input.type}`)
   }
 
   const sourceExists = db.prepare('SELECT 1 FROM events WHERE id = ?').get(input.source_id)
   if (!sourceExists) {
-    throw new Error(`Source event not found: ${input.source_id}`)
+    throw new NotFoundError(`Source event not found: ${input.source_id}`)
   }
 
   const targetExists = db.prepare('SELECT 1 FROM events WHERE id = ?').get(input.target_id)
   if (!targetExists) {
-    throw new Error(`Target event not found: ${input.target_id}`)
+    throw new NotFoundError(`Target event not found: ${input.target_id}`)
   }
 
   if (input.source_id === input.target_id) {
-    throw new Error('Cannot create relationship to self')
+    throw new SelfRelationshipError('Cannot create relationship to self')
   }
 
   const now = new Date().toISOString()

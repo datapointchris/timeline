@@ -33,7 +33,7 @@ describe('Relationships API', () => {
       })
 
       expect(response.status).toBe(400)
-      expect(response.body.error).toContain('Invalid relationship type')
+      expect(response.body.code).toBe('invalid_relationship_type')
     })
 
     it('should return 404 if source event does not exist', async () => {
@@ -44,6 +44,7 @@ describe('Relationships API', () => {
       })
 
       expect(response.status).toBe(404)
+      expect(response.body.code).toBe('not_found')
     })
 
     it('should return 400 for self-referential relationship', async () => {
@@ -54,7 +55,7 @@ describe('Relationships API', () => {
       })
 
       expect(response.status).toBe(400)
-      expect(response.body.error).toContain('self')
+      expect(response.body.code).toBe('self_relationship')
     })
 
     it('should return 409 for duplicate relationship', async () => {
@@ -71,6 +72,7 @@ describe('Relationships API', () => {
       })
 
       expect(response.status).toBe(409)
+      expect(response.body.code).toBe('duplicate')
     })
   })
 
