@@ -1,6 +1,6 @@
 # The production image built from this checkout and run on this desk, so a
 # change to the Dockerfile or the runtime layout is seen before it ships.
-# docker-compose.yml beside it is the production deployment and stays as it is.
+# docker-compose.yml beside it is the production deployment.
 #
 # .env is copied from .env.example, whose values are the container's paths.
 # ./data holds the dev database `npm run dev` uses, and the container applies

@@ -1,7 +1,7 @@
 version: '3'
 
-# Three npm workspaces — client, server, shared — plus a local container and
-# drizzle migrations, none of which npm reaches.
+# Three npm workspaces — client, server, shared — and a local container, the
+# one thing here with no npm script behind it.
 #
 # Every JS verb delegates to the root package.json script rather than
 # reimplementing the workspace fan-out. package.json stays the one place a
@@ -14,9 +14,6 @@ tasks:
     cmds:
       - task --list
 
-  # A worktree is a clean checkout, so everything gitignored is absent. The npm
-  # install runs at the root because that is where the lockfile and the three
-  # workspaces are.
   setup:
     desc: Make a fresh checkout runnable
     cmds:
@@ -72,7 +69,7 @@ tasks:
   # The root docker-compose.yml is the production deployment, so these name the
   # local file. Its logs are `docker compose -f docker-compose.local.yml logs -f`.
   container:start:
-    desc: Build the image from this checkout and run it on :3000 until healthy
+    desc: Build the image from this checkout, run it on :3000, and wait until it is healthy
     preconditions:
       - sh: test -f .env
         msg: 'No .env at the repo root. Copy .env.example to .env.'

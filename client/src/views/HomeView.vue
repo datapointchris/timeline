@@ -34,7 +34,7 @@ async function handleFilter(params: { search?: string; type?: EventType; tag?: s
 
   if (params.search) {
     let results = await searchEvents(params.search)
-    // A search result carries no tags, so the list endpoint applies the type and tag filters.
+    // /events/search takes no type or tag, so the ids matching them come from the list endpoint.
     if (params.type || params.tag) {
       const matching = await api.events.list({ type: params.type, tag: params.tag })
       const matchingIds = new Set(matching.map((e) => e.id))

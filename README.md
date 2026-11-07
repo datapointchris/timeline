@@ -92,8 +92,9 @@ curl localhost:3000/api/tags                          # every tag
 Lists come back in date order. `after` and `before` take a year and include it, with a BCE year
 negative. An event's year is the leading number of its `date_start`.
 
-Writes are `POST`, `PUT` and `DELETE` on the same nouns. `server/src/routes/` holds every route. An
-event read carries a `media` list, and no route writes to it.
+Events are written with `POST`, `PUT` and `DELETE` under `/api/events`. A tag is added with `POST
+/api/tags/events/<id>/tags`, and a relationship with `POST /api/relationships`. `server/src/routes/`
+holds every route. An event read carries a `media` list, and no route writes to it.
 
 The app has no login. Anything that can reach the port can create, edit and delete events. Put an
 authenticating proxy in front of it before it faces a network.

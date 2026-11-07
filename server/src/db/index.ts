@@ -9,8 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true'
 
-// A test empties the database before it runs, so a suite never opens a file, whatever
-// DATABASE_PATH names.
+// src/test/setup.ts deletes every row before each test, so a suite pointed at DATABASE_PATH would
+// wipe that database. Tests always open :memory:.
 const DB_PATH = isTest ? ':memory:' : (process.env.DATABASE_PATH ?? path.join(__dirname, '..', '..', '..', 'data', 'timeline.db'))
 
 const MIGRATIONS_FOLDER = process.env.MIGRATIONS_FOLDER ?? path.join(__dirname, '..', '..', 'migrations')
