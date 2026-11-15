@@ -67,7 +67,7 @@ tasks:
       - npm run db:seed
 
   # The root docker-compose.yml is the production deployment, so these name the
-  # local file. Its logs are `docker compose -f docker-compose.local.yml logs -f`.
+  # local file. README § "The container" describes the local run.
   container:start:
     desc: Build the image from this checkout, run it on :3000, and wait until it is healthy
     preconditions:
