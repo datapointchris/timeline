@@ -26,6 +26,7 @@ the constraints to keep when changing the repo.
 Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose pull && up`
 on the production host.
 
-- **This repo's Node version is `node:24-alpine`** in both `Dockerfile` stages.
+- **The Node major in `.nvmrc` and both `Dockerfile` `FROM` lines change together.** Those files
+  hold the version.
 - **SQLite snapshots must use `sqlite3 .backup`**, never a raw `cp`, because the database runs in
   WAL mode and a copy can tear a page.
