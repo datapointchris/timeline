@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { api } from '../api/client'
+import { useDebounce } from '../composables/useDebounce'
 import type { TimelineEvent, RelationshipType, CreateRelationshipInput } from 'shared/types'
 
 const props = defineProps<{
@@ -51,17 +52,16 @@ const filteredResults = computed(() => {
   return searchResults.value.filter((e) => e.id !== props.sourceEventId && !props.existingTargetIds.includes(e.id))
 })
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
+const searchDebounce = useDebounce(300)
 
 watch(searchQuery, (query) => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-
   if (!query.trim()) {
+    searchDebounce.cancel()
     searchResults.value = []
     return
   }
 
-  searchTimeout = setTimeout(async () => {
+  searchDebounce.schedule(async () => {
     searching.value = true
     try {
       searchResults.value = await api.events.search(query)
@@ -70,7 +70,7 @@ watch(searchQuery, (query) => {
     } finally {
       searching.value = false
     }
-  }, 300)
+  })
 })
 
 function selectEvent(event: TimelineEvent) {

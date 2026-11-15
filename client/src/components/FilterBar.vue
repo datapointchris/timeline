@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { api } from '../api/client'
+import { useDebounce } from '../composables/useDebounce'
 import type { Tag, EventType } from 'shared/types'
 
 const props = defineProps<{
@@ -50,12 +51,9 @@ function emitFilter() {
   })
 }
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
+const searchDebounce = useDebounce(300)
 
-watch(searchQuery, () => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(emitFilter, 300)
-})
+watch(searchQuery, () => searchDebounce.schedule(emitFilter))
 
 watch([selectedType, selectedTag], emitFilter)
 
