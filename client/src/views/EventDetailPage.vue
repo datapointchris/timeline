@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { EventWithRelations, TimelineEvent } from 'shared/types'
-import { RELATIONSHIP_INVERSES } from 'shared/types'
 import { api } from '../api/client'
+import { formatEventDate, formatRelationType } from '../eventLabels'
 
 const props = defineProps<{
   id: string
@@ -34,26 +34,6 @@ watch(
   },
   { immediate: true },
 )
-
-function formatDate(): string {
-  if (!event.value) return ''
-  const ev = event.value
-  if (ev.date_display) return ev.date_display
-  if (!ev.date_start) return ''
-
-  const prefix = ev.is_bce ? 'BCE ' : ''
-  if (ev.date_end && ev.date_end !== ev.date_start) {
-    return `${prefix}${ev.date_start} – ${ev.date_end}`
-  }
-  return `${prefix}${ev.date_start}`
-}
-
-function formatRelationType(type: string, inverse: boolean): string {
-  if (inverse) {
-    return RELATIONSHIP_INVERSES[type as keyof typeof RELATIONSHIP_INVERSES] || type
-  }
-  return type.replace(/_/g, ' ')
-}
 
 function navigateToEvent(ev: TimelineEvent) {
   router.push(`/event/${ev.id}`)
@@ -120,9 +100,9 @@ function goBack() {
               {{ event.type }}
             </span>
             <span
-              v-if="formatDate()"
+              v-if="formatEventDate(event)"
               class="tag tag-other">
-              {{ formatDate() }}
+              {{ formatEventDate(event) }}
             </span>
           </div>
 

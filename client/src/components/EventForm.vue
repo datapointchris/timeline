@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useEvents } from '../composables/useEvents'
 import { api } from '../api/client'
+import { formatRelationType } from '../eventLabels'
 import RelationshipPicker from './RelationshipPicker.vue'
 import type {
   CreateEventInput,
@@ -169,10 +170,6 @@ const existingTargetIds = computed(() => {
   const pending = pendingRelationships.value.map((r) => r.target_id)
   return [...existing, ...pending]
 })
-
-function formatRelationType(type: string): string {
-  return type.replace(/_/g, ' ')
-}
 
 function addPendingRelationship(rel: CreateRelationshipInput) {
   pendingRelationships.value.push(rel)
@@ -532,7 +529,7 @@ onMounted(() => {
             class="relationship-item"
             :class="{ 'marked-for-deletion': relationshipsToDelete.includes(rel.id) }">
             <div class="relationship-info">
-              <span class="relationship-type">{{ formatRelationType(rel.type) }}</span>
+              <span class="relationship-type">{{ formatRelationType(rel.type, false) }}</span>
               <span class="relationship-target">{{ rel.event.title }}</span>
               <span
                 v-if="rel.notes"
@@ -567,7 +564,7 @@ onMounted(() => {
             :key="index"
             class="relationship-item pending">
             <div class="relationship-info">
-              <span class="relationship-type">{{ formatRelationType(rel.type) }}</span>
+              <span class="relationship-type">{{ formatRelationType(rel.type, false) }}</span>
               <span class="relationship-target">{{ rel.target_id }}</span>
               <span
                 v-if="rel.notes"

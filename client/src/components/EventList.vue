@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TimelineEvent } from 'shared/types'
+import { formatEventDate } from '../eventLabels'
 
 defineProps<{
   events: readonly TimelineEvent[]
@@ -8,17 +9,6 @@ defineProps<{
 const emit = defineEmits<{
   select: [event: TimelineEvent]
 }>()
-
-function formatDate(event: TimelineEvent): string {
-  if (event.date_display) return event.date_display
-  if (!event.date_start) return ''
-
-  const prefix = event.is_bce ? 'BCE ' : ''
-  if (event.date_end && event.date_end !== event.date_start) {
-    return `${prefix}${event.date_start} – ${event.date_end}`
-  }
-  return `${prefix}${event.date_start}`
-}
 </script>
 
 <template>
@@ -48,9 +38,9 @@ function formatDate(event: TimelineEvent): string {
         </div>
 
         <p
-          v-if="formatDate(event)"
+          v-if="formatEventDate(event)"
           class="event-date">
-          {{ formatDate(event) }}
+          {{ formatEventDate(event) }}
         </p>
 
         <p
