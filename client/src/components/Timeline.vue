@@ -180,8 +180,12 @@ watch(
   () => props.events,
   (newEvents) => {
     if (items && timeline) {
-      items.clear()
-      items.add(eventsToItems(newEvents))
+      // Updating in place lets vis-timeline keep the DOM of items that are still shown, where
+      // clearing would tear down and rebuild every item.
+      const newItems = eventsToItems(newEvents)
+      const keep = new Set(newItems.map((item) => item.id))
+      items.remove(items.getIds().filter((id) => !keep.has(id as string)))
+      items.update(newItems)
       // Re-apply selection after updating items
       timeline.setSelection(props.selectedEventIds || [])
       // Fit to all events on first load only
@@ -193,7 +197,6 @@ watch(
       }
     }
   },
-  { deep: true },
 )
 
 watch(
