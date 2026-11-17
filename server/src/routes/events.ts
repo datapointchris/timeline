@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, searchEvents } from '../services/events.service.js'
-import { isDuplicateKey } from '../errors.js'
+import { isDuplicateKey, sendError } from '../errors.js'
 import type { CreateEventInput, UpdateEventInput } from 'shared'
 
 const router = Router()
@@ -11,7 +11,7 @@ router.get('/', (req: Request, res: Response) => {
   const before = req.query.before === undefined ? undefined : parseInt(req.query.before as string, 10)
 
   if (Number.isNaN(after) || Number.isNaN(before)) {
-    res.status(400).json({ error: 'after and before take a year, negative for BCE' })
+    sendError(res, 400, 'after and before take a year, negative for BCE')
     return
   }
 
@@ -30,7 +30,7 @@ router.get('/search', (req: Request, res: Response) => {
   const query = req.query.q as string
 
   if (!query) {
-    res.status(400).json({ error: 'Query parameter "q" is required' })
+    sendError(res, 400, 'Query parameter "q" is required')
     return
   }
 
@@ -42,7 +42,7 @@ router.get('/:id', (req: Request, res: Response) => {
   const event = getEventById(req.params.id)
 
   if (!event) {
-    res.status(404).json({ error: 'Event not found' })
+    sendError(res, 404, 'Event not found')
     return
   }
 
@@ -53,7 +53,7 @@ router.post('/', (req: Request, res: Response) => {
   const input: CreateEventInput = req.body
 
   if (!input.id || !input.title) {
-    res.status(400).json({ error: 'id and title are required' })
+    sendError(res, 400, 'id and title are required')
     return
   }
 
@@ -62,7 +62,7 @@ router.post('/', (req: Request, res: Response) => {
     res.status(201).json(event)
   } catch (error) {
     if (isDuplicateKey(error)) {
-      res.status(409).json({ error: 'Event with this id already exists', code: 'duplicate' })
+      sendError(res, 409, 'Event with this id already exists', 'duplicate')
       return
     }
     throw error
@@ -74,7 +74,7 @@ router.put('/:id', (req: Request, res: Response) => {
   const event = updateEvent(req.params.id, input)
 
   if (!event) {
-    res.status(404).json({ error: 'Event not found' })
+    sendError(res, 404, 'Event not found')
     return
   }
 
@@ -85,7 +85,7 @@ router.delete('/:id', (req: Request, res: Response) => {
   const deleted = deleteEvent(req.params.id)
 
   if (!deleted) {
-    res.status(404).json({ error: 'Event not found' })
+    sendError(res, 404, 'Event not found')
     return
   }
 

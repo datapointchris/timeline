@@ -1,4 +1,6 @@
+import { STATUS_CODES } from 'node:http'
 import Database from 'better-sqlite3'
+import type { Response } from 'express'
 
 // Each failure a route answers differently gets its own class and a stable `code`.
 // Routes branch on the class, and the response carries the code beside the message,
@@ -24,4 +26,10 @@ const DUPLICATE_KEY_CODES = new Set(['SQLITE_CONSTRAINT_UNIQUE', 'SQLITE_CONSTRA
 
 export function isDuplicateKey(error: unknown): boolean {
   return error instanceof Database.SqliteError && DUPLICATE_KEY_CODES.has(error.code)
+}
+
+// The one error body every answer carries: the status text, a sentence a person reads,
+// and the code a client branches on where the failure has one.
+export function sendError(res: Response, status: number, message: string, code?: ErrorCode): void {
+  res.status(status).json({ error: STATUS_CODES[status] ?? 'Error', message, ...(code && { code }) })
 }

@@ -6,6 +6,9 @@ import relationshipsRouter from './routes/relationships.js'
 import tagsRouter from './routes/tags.js'
 import { db } from './db/index.js'
 import { logger } from './lib/logger.js'
+import { sendError } from './errors.js'
+
+type HttpError = Error & { status?: number; expose?: boolean }
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -57,9 +60,18 @@ export function createApp() {
   app.use('/api/relationships', relationshipsRouter)
   app.use('/api/tags', tagsRouter)
 
-  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use('/api', (req, res) => {
+    sendError(res, 404, `No route answers ${req.method} ${req.originalUrl}`)
+  })
+
+  // A body express.json cannot parse arrives as a 4xx error marked safe to show.
+  app.use((err: HttpError, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (err.expose && err.status !== undefined && err.status < 500) {
+      sendError(res, err.status, err.message)
+      return
+    }
     logger.error({ err }, 'unhandled error')
-    res.status(500).json({ error: 'Internal server error' })
+    sendError(res, 500, 'Internal server error')
   })
 
   return app

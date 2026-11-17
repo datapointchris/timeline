@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { getAllTags, getTagsForEvent, addTagToEvent, removeTagFromEvent } from '../services/tags.service.js'
-import { NotFoundError } from '../errors.js'
+import { NotFoundError, sendError } from '../errors.js'
 
 const router = Router()
 
@@ -19,7 +19,7 @@ router.post('/events/:eventId/tags', (req: Request, res: Response) => {
   const { name } = req.body
 
   if (!name || typeof name !== 'string') {
-    res.status(400).json({ error: 'Tag name is required' })
+    sendError(res, 400, 'Tag name is required')
     return
   }
 
@@ -28,7 +28,7 @@ router.post('/events/:eventId/tags', (req: Request, res: Response) => {
     res.status(201).json(tag)
   } catch (error) {
     if (error instanceof NotFoundError) {
-      res.status(404).json({ error: error.message, code: error.code })
+      sendError(res, 404, error.message, error.code)
       return
     }
     throw error
@@ -39,14 +39,14 @@ router.delete('/events/:eventId/tags/:tagId', (req: Request, res: Response) => {
   const tagId = parseInt(req.params.tagId, 10)
 
   if (isNaN(tagId)) {
-    res.status(400).json({ error: 'Invalid tag id' })
+    sendError(res, 400, 'Invalid tag id')
     return
   }
 
   const removed = removeTagFromEvent(req.params.eventId, tagId)
 
   if (!removed) {
-    res.status(404).json({ error: 'Tag not found on this event' })
+    sendError(res, 404, 'Tag not found on this event')
     return
   }
 

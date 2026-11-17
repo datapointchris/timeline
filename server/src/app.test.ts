@@ -36,3 +36,16 @@ describe('probe routes', () => {
     expect(response.body).toEqual({ status: 'not_ready', database: 'error' })
   })
 })
+
+describe('error bodies', () => {
+  it('answers an unmatched path and an unparsable body in the shared shape', async () => {
+    const unmatched = await request(app).get('/api/no-such-route')
+    const unparsable = await request(app).post('/api/events').set('Content-Type', 'application/json').send('{')
+
+    expect(unmatched.status).toBe(404)
+    expect(Object.keys(unmatched.body).sort()).toEqual(['error', 'message'])
+    expect(unmatched.body.error).toBe('Not Found')
+    expect(unparsable.status).toBe(400)
+    expect(unparsable.body.error).toBe('Bad Request')
+  })
+})
