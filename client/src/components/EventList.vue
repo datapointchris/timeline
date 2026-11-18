@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { TimelineEvent } from 'shared/types'
+import type { EventSummary } from 'shared/types'
 import { formatEventDate } from '../eventLabels'
 
 defineProps<{
-  events: readonly TimelineEvent[]
+  events: readonly EventSummary[]
 }>()
 
 const emit = defineEmits<{
-  select: [event: TimelineEvent]
+  select: [event: EventSummary]
 }>()
 </script>
 

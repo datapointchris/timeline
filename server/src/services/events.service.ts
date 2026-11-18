@@ -1,5 +1,6 @@
 import { db } from '../db/index.js'
 import type {
+  EventSummary,
   TimelineEvent,
   Tag,
   Media,
@@ -25,15 +26,23 @@ const INVERSES: Record<string, string> = {
 const SIGNED_YEAR = 'CASE WHEN is_bce THEN -CAST(date_start AS INTEGER) ELSE CAST(date_start AS INTEGER) END'
 const CHRONOLOGICAL = `ORDER BY ${SIGNED_YEAR} ASC, date_start ASC`
 
+// Every column but details, which only the single-event read returns.
+const SUMMARY_COLUMNS = 'id, title, summary, date_start, date_end, date_precision, date_display, is_bce, type, created_at, updated_at'
+
 // SQLite has no boolean type, so is_bce comes back from a query as 0 or 1.
 type EventRow = Omit<TimelineEvent, 'is_bce'> & { is_bce: number }
+type SummaryRow = Omit<EventSummary, 'is_bce'> & { is_bce: number }
 
 function toTimelineEvent(row: EventRow): TimelineEvent {
   return { ...row, is_bce: Boolean(row.is_bce) }
 }
 
-export function getAllEvents(filters?: { tag?: string; type?: string; after?: number; before?: number }): TimelineEvent[] {
-  let query = 'SELECT * FROM events WHERE 1=1'
+function toEventSummary(row: SummaryRow): EventSummary {
+  return { ...row, is_bce: Boolean(row.is_bce) }
+}
+
+export function getAllEvents(filters?: { tag?: string; type?: string; after?: number; before?: number }): EventSummary[] {
+  let query = `SELECT ${SUMMARY_COLUMNS} FROM events WHERE 1=1`
   const params: Record<string, string | number> = {}
 
   if (filters?.type) {
@@ -53,21 +62,21 @@ export function getAllEvents(filters?: { tag?: string; type?: string; after?: nu
 
   query += ` ${CHRONOLOGICAL}`
 
-  let events = db.prepare(query).all(params) as EventRow[]
+  let events = db.prepare(query).all(params) as SummaryRow[]
 
   if (filters?.tag) {
     const tagFilter = db.prepare(`
-      SELECT e.* FROM events e
+      SELECT e.id FROM events e
       JOIN event_tags et ON e.id = et.event_id
       JOIN tags t ON et.tag_id = t.id
       WHERE t.name = ?
     `)
-    const taggedEvents = tagFilter.all(filters.tag) as EventRow[]
+    const taggedEvents = tagFilter.all(filters.tag) as Array<{ id: string }>
     const taggedIds = new Set(taggedEvents.map((e) => e.id))
     events = events.filter((e) => taggedIds.has(e.id))
   }
 
-  return events.map(toTimelineEvent)
+  return events.map(toEventSummary)
 }
 
 export function getEventById(id: string): EventWithRelations | null {
@@ -281,17 +290,17 @@ export function deleteEvent(id: string): boolean {
   return result.changes > 0
 }
 
-export function searchEvents(query: string): TimelineEvent[] {
+export function searchEvents(query: string): EventSummary[] {
   const pattern = `%${query}%`
   const results = db
     .prepare(
       `
-    SELECT * FROM events
+    SELECT ${SUMMARY_COLUMNS} FROM events
     WHERE title LIKE ? OR summary LIKE ? OR details LIKE ?
     ${CHRONOLOGICAL}
   `,
     )
-    .all(pattern, pattern, pattern) as EventRow[]
+    .all(pattern, pattern, pattern) as SummaryRow[]
 
-  return results.map(toTimelineEvent)
+  return results.map(toEventSummary)
 }

@@ -1,8 +1,8 @@
 import { ref, readonly } from 'vue'
-import type { TimelineEvent, EventWithRelations, CreateEventInput, UpdateEventInput } from 'shared/types'
+import type { EventSummary, EventWithRelations, CreateEventInput, UpdateEventInput } from 'shared/types'
 import { api } from '../api/client'
 
-const events = ref<TimelineEvent[]>([])
+const events = ref<EventSummary[]>([])
 const selectedEvent = ref<EventWithRelations | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)

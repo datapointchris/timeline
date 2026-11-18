@@ -6,11 +6,12 @@ export type RelationshipType = 'influenced_by' | 'caused' | 'contemporary_with' 
 
 export type MediaType = 'image' | 'link' | 'video_url'
 
-export interface TimelineEvent {
+// An event as the list and search endpoints return it. The rich-text details are left out, because
+// only the single-event read displays them.
+export interface EventSummary {
   id: string
   title: string
   summary: string | null
-  details: string | null
   date_start: string | null
   date_end: string | null
   date_precision: DatePrecision | null
@@ -19,6 +20,10 @@ export interface TimelineEvent {
   type: EventType | null
   created_at: string
   updated_at: string
+}
+
+export interface TimelineEvent extends EventSummary {
+  details: string | null
 }
 
 export interface Tag {

@@ -2,7 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { api } from '../api/client'
 import { useDebounce } from '../composables/useDebounce'
-import type { TimelineEvent, RelationshipType, CreateRelationshipInput } from 'shared/types'
+import type { EventSummary, RelationshipType, CreateRelationshipInput } from 'shared/types'
 
 const props = defineProps<{
   sourceEventId: string
@@ -15,8 +15,8 @@ const emit = defineEmits<{
 }>()
 
 const searchQuery = ref('')
-const searchResults = ref<TimelineEvent[]>([])
-const selectedEvent = ref<TimelineEvent | null>(null)
+const searchResults = ref<EventSummary[]>([])
+const selectedEvent = ref<EventSummary | null>(null)
 const selectedType = ref<RelationshipType>('related')
 const notes = ref('')
 const searching = ref(false)
@@ -73,7 +73,7 @@ watch(searchQuery, (query) => {
   })
 })
 
-function selectEvent(event: TimelineEvent) {
+function selectEvent(event: EventSummary) {
   selectedEvent.value = event
   searchQuery.value = ''
   searchResults.value = []

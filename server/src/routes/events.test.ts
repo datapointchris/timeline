@@ -162,6 +162,20 @@ describe('Events API', () => {
       expect(response.body[0].title).toBe('Nietzsche Book')
     })
 
+    it('should match on details, which only the single-event read returns', async () => {
+      await request(app).post('/api/events').send({ id: 'd1', title: 'Plain', details: '<p>zarathustra</p>' })
+
+      const search = await request(app).get('/api/events/search?q=zarathustra')
+      expect(search.body.map((e: { id: string }) => e.id)).toEqual(['d1'])
+      expect(search.body[0]).not.toHaveProperty('details')
+
+      const list = await request(app).get('/api/events')
+      expect(list.body[0]).not.toHaveProperty('details')
+
+      const one = await request(app).get('/api/events/d1')
+      expect(one.body.details).toBe('<p>zarathustra</p>')
+    })
+
     it('should return 400 if query is missing', async () => {
       const response = await request(app).get('/api/events/search')
 

@@ -8,7 +8,7 @@ import FilterBar from '../components/FilterBar.vue'
 import SlideOver from '../components/SlideOver.vue'
 import { useEvents } from '../composables/useEvents'
 import { api } from '../api/client'
-import type { TimelineEvent, EventType } from 'shared/types'
+import type { EventSummary, EventType } from 'shared/types'
 
 const { events, fetchEvents, searchEvents } = useEvents()
 const selectedEventIds = ref<string[]>([])
@@ -19,7 +19,7 @@ const editingEventId = ref<string | null>(null)
 const slideOverEventId = ref<string | null>(null)
 
 const currentFilters = ref<{ search?: string; type?: EventType; tag?: string }>({})
-const searchResults = ref<TimelineEvent[] | null>(null)
+const searchResults = ref<EventSummary[] | null>(null)
 
 const displayedEvents = computed(() => {
   let result = searchResults.value !== null ? searchResults.value : events.value
@@ -47,13 +47,13 @@ async function handleFilter(params: { search?: string; type?: EventType; tag?: s
   }
 }
 
-function selectEvent(event: TimelineEvent) {
+function selectEvent(event: EventSummary) {
   if (!selectedEventIds.value.includes(event.id)) {
     selectedEventIds.value = [...selectedEventIds.value, event.id]
   }
 }
 
-function deselectEvent(event: TimelineEvent) {
+function deselectEvent(event: EventSummary) {
   selectedEventIds.value = selectedEventIds.value.filter((eid) => eid !== event.id)
 }
 
@@ -101,7 +101,7 @@ function navigateSlideOver(eventId: string) {
   }
 }
 
-function navigateToEvent(event: TimelineEvent) {
+function navigateToEvent(event: EventSummary) {
   if (!selectedEventIds.value.includes(event.id)) {
     selectedEventIds.value = [...selectedEventIds.value, event.id]
   }

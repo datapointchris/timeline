@@ -1,11 +1,11 @@
-import type { TimelineEvent } from 'shared/types'
+import type { EventSummary } from 'shared/types'
 import { RELATIONSHIP_INVERSES } from 'shared/types'
 
 /**
  * The date line shown for an event: its free-text date_display when set, otherwise its start
  * date, or its start and end when they differ, prefixed with BCE where it applies.
  */
-export function formatEventDate(event: TimelineEvent): string {
+export function formatEventDate(event: EventSummary): string {
   if (event.date_display) return event.date_display
   if (!event.date_start) return ''
 

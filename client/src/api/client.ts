@@ -1,4 +1,5 @@
 import type {
+  EventSummary,
   TimelineEvent,
   EventWithRelations,
   CreateEventInput,
@@ -38,7 +39,7 @@ export const api = {
       if (params?.type) searchParams.set('type', params.type)
       if (params?.tag) searchParams.set('tag', params.tag)
       const query = searchParams.toString()
-      return request<TimelineEvent[]>(`/events${query ? `?${query}` : ''}`)
+      return request<EventSummary[]>(`/events${query ? `?${query}` : ''}`)
     },
 
     get: (id: string) => request<EventWithRelations>(`/events/${id}`),
@@ -60,7 +61,7 @@ export const api = {
         method: 'DELETE',
       }),
 
-    search: (query: string) => request<TimelineEvent[]>(`/events/search?q=${encodeURIComponent(query)}`),
+    search: (query: string) => request<EventSummary[]>(`/events/search?q=${encodeURIComponent(query)}`),
   },
 
   tags: {

@@ -2,17 +2,17 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { Timeline } from 'vis-timeline/standalone'
 import { DataSet } from 'vis-data/standalone'
-import type { TimelineEvent } from 'shared/types'
+import type { EventSummary } from 'shared/types'
 import 'vis-timeline/styles/vis-timeline-graph2d.css'
 
 const props = defineProps<{
-  events: readonly TimelineEvent[]
+  events: readonly EventSummary[]
   selectedEventIds?: string[]
 }>()
 
 const emit = defineEmits<{
-  select: [event: TimelineEvent]
-  deselect: [event: TimelineEvent]
+  select: [event: EventSummary]
+  deselect: [event: EventSummary]
 }>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -55,7 +55,7 @@ function parseDate(dateStr: string | null, isBce: boolean): Date | null {
   return date
 }
 
-function eventsToItems(events: readonly TimelineEvent[]) {
+function eventsToItems(events: readonly EventSummary[]) {
   const result: TimelineItem[] = []
   for (const event of events) {
     if (!event.date_start) continue
