@@ -17,6 +17,7 @@ describe('Events API', () => {
       expect(response.status).toBe(201)
       expect(response.body.id).toBe('test-event')
       expect(response.body.title).toBe('Test Event')
+      expect(response.body.is_bce).toBe(false)
     })
 
     it('should create an event with tags', async () => {

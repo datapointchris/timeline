@@ -25,6 +25,13 @@ const INVERSES: Record<string, string> = {
 const SIGNED_YEAR = 'CASE WHEN is_bce THEN -CAST(date_start AS INTEGER) ELSE CAST(date_start AS INTEGER) END'
 const CHRONOLOGICAL = `ORDER BY ${SIGNED_YEAR} ASC, date_start ASC`
 
+// SQLite has no boolean type, so is_bce comes back from a query as 0 or 1.
+type EventRow = Omit<TimelineEvent, 'is_bce'> & { is_bce: number }
+
+function toTimelineEvent(row: EventRow): TimelineEvent {
+  return { ...row, is_bce: Boolean(row.is_bce) }
+}
+
 export function getAllEvents(filters?: { tag?: string; type?: string; after?: number; before?: number }): TimelineEvent[] {
   let query = 'SELECT * FROM events WHERE 1=1'
   const params: Record<string, string | number> = {}
@@ -46,7 +53,7 @@ export function getAllEvents(filters?: { tag?: string; type?: string; after?: nu
 
   query += ` ${CHRONOLOGICAL}`
 
-  let events = db.prepare(query).all(params) as TimelineEvent[]
+  let events = db.prepare(query).all(params) as EventRow[]
 
   if (filters?.tag) {
     const tagFilter = db.prepare(`
@@ -55,16 +62,16 @@ export function getAllEvents(filters?: { tag?: string; type?: string; after?: nu
       JOIN tags t ON et.tag_id = t.id
       WHERE t.name = ?
     `)
-    const taggedEvents = tagFilter.all(filters.tag) as TimelineEvent[]
+    const taggedEvents = tagFilter.all(filters.tag) as EventRow[]
     const taggedIds = new Set(taggedEvents.map((e) => e.id))
     events = events.filter((e) => taggedIds.has(e.id))
   }
 
-  return events.map((e) => ({ ...e, is_bce: Boolean(e.is_bce) }))
+  return events.map(toTimelineEvent)
 }
 
 export function getEventById(id: string): EventWithRelations | null {
-  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as TimelineEvent | undefined
+  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as EventRow | undefined
 
   if (!event) return null
 
@@ -127,7 +134,7 @@ export function getEventById(id: string): EventWithRelations | null {
     type: r.type,
     notes: r.notes,
     created_at: r.created_at,
-    event: {
+    event: toTimelineEvent({
       id: r.event_id,
       title: r.title,
       summary: null,
@@ -136,11 +143,11 @@ export function getEventById(id: string): EventWithRelations | null {
       date_end: r.date_end,
       date_precision: null,
       date_display: null,
-      is_bce: Boolean(r.is_bce),
+      is_bce: r.is_bce,
       type: r.event_type as TimelineEvent['type'],
       created_at: '',
       updated_at: '',
-    },
+    }),
   }))
 
   const inverse_relationships: RelationshipWithEvent[] = incomingRels.map((r) => ({
@@ -150,7 +157,7 @@ export function getEventById(id: string): EventWithRelations | null {
     type: INVERSES[r.type] as RelationshipWithEvent['type'],
     notes: r.notes,
     created_at: r.created_at,
-    event: {
+    event: toTimelineEvent({
       id: r.event_id,
       title: r.title,
       summary: null,
@@ -159,16 +166,15 @@ export function getEventById(id: string): EventWithRelations | null {
       date_end: r.date_end,
       date_precision: null,
       date_display: null,
-      is_bce: Boolean(r.is_bce),
+      is_bce: r.is_bce,
       type: r.event_type as TimelineEvent['type'],
       created_at: '',
       updated_at: '',
-    },
+    }),
   }))
 
   return {
-    ...event,
-    is_bce: Boolean(event.is_bce),
+    ...toTimelineEvent(event),
     tags,
     media,
     relationships,
@@ -215,7 +221,7 @@ export function createEvent(input: CreateEventInput): TimelineEvent {
     }
   }
 
-  return db.prepare('SELECT * FROM events WHERE id = ?').get(input.id) as TimelineEvent
+  return toTimelineEvent(db.prepare('SELECT * FROM events WHERE id = ?').get(input.id) as EventRow)
 }
 
 export function updateEvent(id: string, input: UpdateEventInput): TimelineEvent | null {
@@ -267,8 +273,7 @@ export function updateEvent(id: string, input: UpdateEventInput): TimelineEvent 
 
   db.prepare(`UPDATE events SET ${fields.join(', ')} WHERE id = ?`).run(...values)
 
-  const updated = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as TimelineEvent
-  return { ...updated, is_bce: Boolean(updated.is_bce) }
+  return toTimelineEvent(db.prepare('SELECT * FROM events WHERE id = ?').get(id) as EventRow)
 }
 
 export function deleteEvent(id: string): boolean {
@@ -286,7 +291,7 @@ export function searchEvents(query: string): TimelineEvent[] {
     ${CHRONOLOGICAL}
   `,
     )
-    .all(pattern, pattern, pattern) as TimelineEvent[]
+    .all(pattern, pattern, pattern) as EventRow[]
 
-  return results.map((e) => ({ ...e, is_bce: Boolean(e.is_bce) }))
+  return results.map(toTimelineEvent)
 }
