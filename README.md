@@ -63,11 +63,14 @@ A relationship is stored once, from a source event to a target, with a type and 
 Reading an event returns both directions. Outgoing links arrive as `relationships`. Incoming links
 arrive as `inverse_relationships`, relabeled with the inverse type. So a stored `influenced_by` from
 _Beyond Good and Evil_ to _The World as Will and Representation_ reads as `influenced` from the
-second. The API refuses three kinds of relationship:
+second. The API refuses a relationship in these cases, and `server/src/routes/relationships.ts`
+maps each to its status and error code:
 
-- one from an event to itself, with 400
-- a repeat of the same source, target and type, with 409
-- one whose source or target does not exist, with 404
+- one missing its `source_id`, `target_id` or `type`, with 400
+- one whose type is not in the fixed vocabulary, with 400 `invalid_relationship_type`
+- one from an event to itself, with 400 `self_relationship`
+- a repeat of the same source, target and type, with 409 `duplicate`
+- one whose source or target does not exist, with 404 `not_found`
 
 Deleting an event deletes its relationships, its tag links and its media. SQLite enforces the
 foreign keys on every connection.
