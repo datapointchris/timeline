@@ -160,7 +160,30 @@ and answers 503 on `/api/ready`.
 
 Every push to `main` runs the checks, then publishes `ghcr.io/datapointchris/timeline` tagged
 `latest` and `sha-<short sha>`. The image is public. `docker-compose.yml` is the production deployment,
-which pulls that image. No local command reads it.
+which pulls that image. No local command reads it. It sends traces to the host's collector at
+`host.docker.internal:4318`, which `extra_hosts` maps to the Docker bridge.
+
+## Tracing — off until `OTEL_EXPORTER_OTLP_ENDPOINT` names a collector
+
+```bash
+npm run build
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 npm start
+```
+
+`npm start` and the image both start Node with `--import` of `server/dist/tracing/register.js`.
+Where `OTEL_EXPORTER_OTLP_ENDPOINT` is unset, that file loads nothing and the server runs untraced.
+
+Where it is set, `server/src/tracing/start.ts` starts the OpenTelemetry Node SDK with the HTTP
+instrumentation, ahead of the server's own modules. Each request becomes a server span, exported
+over OTLP/HTTP as protobuf. The SDK also exports the instrumentation's request-duration metrics,
+unless `OTEL_METRICS_EXPORTER=none`. The standard `OTEL_*` variables configure the rest.
+`OTEL_SERVICE_NAME` replaces the default name, `timeline`.
+
+A request carrying a W3C `traceparent` header continues the caller's trace, so its span is the
+caller's child. Every member of its `baggage` header is copied onto the span as an attribute.
+
+`OTEL_TRACES_EXPORTER` and `OTEL_EXPORTER_OTLP_PROTOCOL` have no effect on traces. `start.ts`
+names its own span processors, and the SDK then builds none from those variables.
 
 ## Checks — only the server has tests, and they run in memory
 

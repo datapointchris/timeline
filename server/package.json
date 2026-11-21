@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node --import ./dist/tracing/register.js dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:seed": "tsx src/db/seed.ts",
     "test": "vitest run",
@@ -15,6 +15,13 @@
     "lint:fix": "eslint --fix ."
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.10.0",
+    "@opentelemetry/baggage-span-processor": "^0.6.1",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.301.2",
+    "@opentelemetry/instrumentation": "^0.301.2",
+    "@opentelemetry/instrumentation-http": "^0.301.2",
+    "@opentelemetry/sdk-node": "^0.301.2",
+    "@opentelemetry/sdk-trace": "^3.1.1",
     "better-sqlite3": "^13.0.2",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.45.1",

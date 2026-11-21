@@ -45,4 +45,6 @@ COPY --from=builder /app/package.json ./package.json
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
   CMD ["wget", "-qO-", "http://localhost:3000/api/health"]
-CMD ["node", "server/dist/index.js"]
+# The tracing setup loads ahead of the server's modules, so its HTTP instrumentation can patch
+# node:http before express imports it. Without OTEL_EXPORTER_OTLP_ENDPOINT it loads nothing.
+CMD ["node", "--import", "./server/dist/tracing/register.js", "server/dist/index.js"]
