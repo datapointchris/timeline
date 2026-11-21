@@ -4,6 +4,7 @@ import express from 'express'
 import { createApp } from './app.js'
 import { initializeDatabase, closeDatabase } from './db/index.js'
 import { logger } from './lib/logger.js'
+import { shutdownTracing } from './tracing/shutdown.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -39,7 +40,7 @@ function shutdown(signal: string): void {
   }, 10_000)
   forceExit.unref()
 
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       logger.error({ err }, 'http server close error')
     }
@@ -47,6 +48,12 @@ function shutdown(signal: string): void {
       closeDatabase()
     } catch (closeErr) {
       logger.error({ err: closeErr }, 'database close error')
+    }
+    // After the drain, so the spans of requests it finished are among those flushed.
+    try {
+      await shutdownTracing()
+    } catch (tracingErr) {
+      logger.error({ err: tracingErr }, 'tracing shutdown error')
     }
     logger.info('shutdown complete')
     process.exit(0)

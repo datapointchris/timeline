@@ -174,10 +174,18 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 npm start
 Where `OTEL_EXPORTER_OTLP_ENDPOINT` is unset, that file loads nothing and the server runs untraced.
 
 Where it is set, `server/src/tracing/start.ts` starts the OpenTelemetry Node SDK with the HTTP
-instrumentation, ahead of the server's own modules. Each request becomes a server span, exported
-over OTLP/HTTP as protobuf. The SDK also exports the instrumentation's request-duration metrics,
-unless `OTEL_METRICS_EXPORTER=none`. The standard `OTEL_*` variables configure the rest.
+and Express instrumentations, ahead of the server's own modules. Each request becomes a server
+span, exported over OTLP/HTTP as protobuf. The span is named by its method and the Express route
+that answered it, such as `GET /api/events/:id`, which it also carries as `http.route`. A request
+no API route matches is named for the catch-all that answers it. The API's 404 gives `GET /api`,
+and the client app's fallback in production gives `GET *`. A static asset keeps the bare method.
+Express's middleware, routers and handlers make no spans of their own. `/api/health` makes no span, because the container's healthcheck calls it every 30
+seconds. The SDK also exports the instrumentation's request-duration metrics, unless
+`OTEL_METRICS_EXPORTER=none`. The standard `OTEL_*` variables configure the rest.
 `OTEL_SERVICE_NAME` replaces the default name, `timeline`.
+
+On `SIGTERM` or `SIGINT` the server drains its requests, then shuts the SDK down, which exports
+the spans and metrics still batched before the process exits.
 
 A request carrying a W3C `traceparent` header continues the caller's trace, so its span is the
 caller's child. Every member of its `baggage` header is copied onto the span as an attribute.
