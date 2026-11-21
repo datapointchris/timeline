@@ -159,9 +159,21 @@ The image's `HEALTHCHECK` probes `/api/health`. A container whose database is fa
 and answers 503 on `/api/ready`.
 
 Every push to `main` runs the checks, then publishes `ghcr.io/datapointchris/timeline` tagged
-`latest` and `sha-<short sha>`. The image is public. `docker-compose.yml` is the production deployment,
-which pulls that image. No local command reads it. It sends traces to the host's collector at
-`host.docker.internal:4318`, which `extra_hosts` maps to the Docker bridge.
+`latest`, `sha-<7>` and `sha-<12>`, each the commit's first characters. The image is public.
+`docker-compose.yml` is the production deployment, which pulls that image. No local command reads it.
+It sends traces to the host's collector at `host.docker.internal:4318`, which `extra_hosts` maps to
+the Docker bridge.
+
+The same run publishes the deploy directory, `ghcr.io/datapointchris/timeline/deploy:sha-<12>`. It
+holds one file, `docker-compose.yml`, with the image line naming the image that run pushed by digest.
+`release/push-deploy-directory` renders and pushes it with ORAS, then pulls it back and compares it
+byte for byte. A published version is never replaced. A re-run finds the image and the directory
+already published, builds nothing, and fails if the directory it renders differs from the one
+published.
+
+```bash
+oras pull ghcr.io/datapointchris/timeline/deploy:sha-<12>
+```
 
 ## Tracing — off until `OTEL_EXPORTER_OTLP_ENDPOINT` names a collector
 

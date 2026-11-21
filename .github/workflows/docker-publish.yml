@@ -1,5 +1,8 @@
 name: Test, then publish the Docker image
 
+# A push to main publishes the image and the deploy directory that names it,
+# under one version: sha- and the commit's first 12 characters.
+#
 # The deploy receiver fires when this workflow succeeds on main, and matches it
 # by this file's path. Renaming the file stops every deploy until the receiver
 # names the new one.
@@ -14,7 +17,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # The deploy directory is <IMAGE>/deploy, a package of its own beside the image.
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   # The repo's generated baseline: lint, format, typecheck and build for the
@@ -22,6 +26,10 @@ jobs:
   validate:
     uses: ./.github/workflows/validate.yml
 
+  # The image goes out tagged with the release's version, sha-<12>, beside
+  # sha-<7> and latest. A version already published is never built again, so
+  # one version names one image, and a re-run renders the deploy directory the
+  # first run pushed.
   image:
     name: Build & push image
     needs: [validate]
@@ -30,8 +38,14 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
+
+      - name: Name the release by its commit
+        id: version
+        run: echo "version=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -41,15 +55,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Only "not found" builds. Any other error fails the step, so a transient
+      # one never pushes a published version under a new digest.
+      - name: Check whether this version is already pushed
+        id: published
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if answer=$(docker buildx imagetools inspect "$IMAGE:$VERSION" 2>&1 > /dev/null); then
+            echo "::notice::$IMAGE:$VERSION is already pushed"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          elif grep -q ': not found$' <<< "$answer"; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$answer" >&2
+            exit 1
+          fi
+
       - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        if: steps.published.outputs.build == 'true'
         id: meta
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE }}
           tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
             type=sha,prefix=sha-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        if: steps.published.outputs.build == 'true'
+        id: build
         with:
           context: .
           push: true
@@ -57,3 +92,60 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # The deploy directory reads the digest from the tag, so the tag has to
+      # name what this job built.
+      - name: Check that the version names this build
+        if: steps.published.outputs.build == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILT: ${{ steps.build.outputs.digest }}
+        run: |
+          tagged=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{json .Manifest}}' | jq -r .digest)
+          if [ "$tagged" != "$BUILT" ]; then
+            echo "::error::$IMAGE:$VERSION is $tagged, not the $BUILT this job built"
+            exit 1
+          fi
+          echo "Pushed \`$IMAGE:$VERSION\` as \`$IMAGE@$BUILT\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # The compose file the host runs, the image above named by digest, pushed
+  # beside it as <IMAGE>/deploy under the same version. Its push is read back,
+  # and the job fails unless the registry serves the bytes rendered.
+  deploy-directory:
+    name: Push the deploy directory
+    needs: image
+    runs-on: ubuntu-26.04
+    # A stalled registry fails the job here rather than at Actions' six-hour default.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # Pinned by version and by the SHA-256 its release publishes for the
+      # linux asset. A bump edits both.
+      - name: Install ORAS
+        env:
+          ORAS_VERSION: 1.4.0
+          ORAS_SHA256: d8e1dce2fd8ce996f1d901845b688eb0cf505a6082897606f053825bb47935d1
+        run: |
+          curl -fsSL --retry 5 --retry-delay 20 -o "$RUNNER_TEMP/oras.tar.gz" \
+            "https://github.com/oras-project/oras/releases/download/v$ORAS_VERSION/oras_${ORAS_VERSION}_linux_amd64.tar.gz"
+          echo "$ORAS_SHA256  $RUNNER_TEMP/oras.tar.gz" | sha256sum -c --quiet -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/oras.tar.gz" -C "$RUNNER_TEMP/bin" oras
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      # The token reaches ORAS on stdin, never on its command line.
+      - name: Log in to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: oras login "$REGISTRY" --username "$GITHUB_ACTOR" --password-stdin <<< "$GITHUB_TOKEN"
+
+      - name: Push the deploy directory and read it back
+        env:
+          VERSION: ${{ needs.image.outputs.version }}
+        run: |
+          release/push-deploy-directory --image "$IMAGE" --version "$VERSION" \
+            --revision "$GITHUB_SHA" --source "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
