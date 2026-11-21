@@ -17,6 +17,10 @@ describe('server tracing', () => {
   })
 
   it("makes the server span a child of the caller's and copies its baggage", async () => {
+    // Left at their default, the SDK's OTLP metric and log exporters would send to localhost:4318,
+    // and shutdown would retry them past the test's timeout where nothing listens.
+    vi.stubEnv('OTEL_METRICS_EXPORTER', 'none')
+    vi.stubEnv('OTEL_LOGS_EXPORTER', 'none')
     const exporter = new InMemorySpanExporter()
     const processor = new SimpleSpanProcessor({ exporter })
     const sdk = startTracing({ spanProcessor: processor })
