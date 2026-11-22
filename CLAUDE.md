@@ -23,9 +23,12 @@ the constraints to keep when changing the repo.
 ## Deployment
 
 **Production runs behind an authenticating reverse proxy.**
-Pushes to `main` auto-deploy via GHA → ghcr.io → webhook → `docker compose pull && up`
-on the production host.
+Pushes to `main` auto-deploy via GHA → ghcr.io → webhook. The release pushes the image and the
+deploy directory `timeline/deploy:sha-<12>`, whose `docker-compose.yml` names the image by digest.
+The production host pulls that directory and runs its compose file, never the repo's own.
 
+- **`docker-compose.yml` keeps exactly one `image:` line, with no tag.**
+  `release/push-deploy-directory` writes the pushed digest into it and refuses any other count.
 - **The Node major in `.nvmrc` and both `Dockerfile` `FROM` lines change together.** Those files
   hold the version.
 - **SQLite snapshots must use `sqlite3 .backup`**, never a raw `cp`, because the database runs in

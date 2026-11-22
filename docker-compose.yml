@@ -2,7 +2,10 @@ name: timeline
 
 services:
   timeline:
-    image: ghcr.io/datapointchris/timeline:latest
+    # The release writes the digest it pushed into this line, and the host runs
+    # that copy from timeline/deploy:sha-<12>. A floating tag here would name no
+    # one image, so the line carries none.
+    image: ghcr.io/datapointchris/timeline
     container_name: timeline
     restart: unless-stopped
     ports:
